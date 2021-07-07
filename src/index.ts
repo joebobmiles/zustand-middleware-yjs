@@ -19,19 +19,44 @@ export const yjs = <S extends State>(
       _set(partial, replace);
       const nextState = _get();
 
-      if (nextState !== previousState)
-      {
-        const stateDiff = diff(previousState, nextState);
+      const stateDiff = diff(previousState, nextState);
 
+      if (stateDiff !== undefined)
+      {
         for (const property in stateDiff)
         {
-          if (stateDiff[property].__old !== undefined && stateDiff[property].__new !== undefined)
+          if (
+            stateDiff[property] !== undefined &&
+            stateDiff[property].__old !== undefined &&
+            stateDiff[property].__new !== undefined
+          )
             map.set(property, stateDiff[property].__new);
         }
       }
     };
 
     const get: GetState<S> = () => _get();
+
+    map.observe((event) =>
+    {
+      if (event.target === map)
+      {
+        event.changes.keys.forEach((change, key) =>
+        {
+          switch (change.action)
+          {
+            case 'add':
+            case 'update':
+              set(() => <unknown>({ [key]: map.get(key) }));
+              break;
+
+            case 'delete':
+            default:
+              break;
+          }
+        });
+      }
+    });
 
     const initialState = config(
       set,

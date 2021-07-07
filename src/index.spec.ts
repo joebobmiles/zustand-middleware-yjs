@@ -75,4 +75,49 @@ describe("Yjs middleware", () =>
     expect(getState().count).toBe(1);
     expect(peerStore.get("count")).toBe(1);
   });
+
+  it("Receives changes from peers.", () =>
+  {
+    type Store =
+    {
+      count: number,
+      increment: () => void,
+    };
+
+    const doc1 = new Y.Doc();
+    const doc2 = new Y.Doc();
+
+    doc1.on('update', (update: any) =>
+    {
+      Y.applyUpdate(doc2, update);
+    });
+    doc2.on('update', (update: any) =>
+    {
+      Y.applyUpdate(doc1, update);
+    });
+
+    const storeName = "store";
+
+    const { getState } =
+      create<Store>(
+        yjs(
+          doc1,
+          storeName,
+          (set) => ({
+            count: 0,
+            increment: () => set((state) => ({ count: state.count + 1 })),
+          })
+        )
+      );
+
+    const peerStore = doc2.getMap(storeName);
+
+    expect(getState().count).toBe(0);
+    expect(peerStore.get("count")).toBe(0);
+
+    peerStore.set("count", 12);
+
+    expect(getState().count).toBe(12);
+    expect(peerStore.get("count")).toBe(12);
+  });
 });
