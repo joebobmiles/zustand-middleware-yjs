@@ -24,8 +24,10 @@ describe("Yjs middleware", () =>
         )
       );
 
-    const { counter } = getState();
+    expect(getState().counter).toBe(0);
 
-    expect(counter).toBe(0);
+    getState().increment();
+
+    expect(getState().counter).toBe(1);
   });
 });

@@ -10,7 +10,7 @@ export const yjs = <S extends State>(
   // The root Y.Map that the store is written and read from.
   const map: Y.Map<any> = doc.getMap(name);
 
-  return (_set: SetState<S>, _get: GetState<S>, _api: StoreApi<S>) =>
+  return (_set: SetState<S>, _get: GetState<S>, _api: StoreApi<S>): S =>
   {
     const set: SetState<S> = (partial, replace) =>
     {
