@@ -1,5 +1,6 @@
-import * as Y from "yjs";
 import { State, StateCreator, SetState, GetState, StoreApi } from "zustand/vanilla";
+import * as Y from "yjs";
+import { diff } from "json-diff";
 
 export const yjs = <S extends State>(
   doc: Y.Doc,
@@ -14,12 +15,25 @@ export const yjs = <S extends State>(
   {
     const set: SetState<S> = (partial, replace) =>
     {
-      _set(partial, replace)
+      const previousState = _get();
+      _set(partial, replace);
+      const nextState = _get();
+
+      if (nextState !== previousState)
+      {
+        const stateDiff = diff(previousState, nextState);
+
+        for (const property in stateDiff)
+        {
+          if (stateDiff[property].__old !== undefined && stateDiff[property].__new !== undefined)
+            map.set(property, stateDiff[property].__new);
+        }
+      }
     };
 
     const get: GetState<S> = () => _get();
 
-    return config(
+    const initialState = config(
       set,
       get,
       {
@@ -28,6 +42,12 @@ export const yjs = <S extends State>(
         getState: get,
       }
     );
+
+    for (const property in initialState)
+      if (typeof initialState[property] !== 'function')
+        map.set(property, initialState[property]);
+
+    return initialState;
   };
 };
 
