@@ -28,7 +28,8 @@ export const yjs = <S extends State>(
           if (
             stateDiff[property] !== undefined &&
             stateDiff[property].__old !== undefined &&
-            stateDiff[property].__new !== undefined
+            stateDiff[property].__new !== undefined &&
+            typeof (nextState as any)[property] !== 'function'
           )
             map.set(property, stateDiff[property].__new);
         }
