@@ -12,17 +12,18 @@ describe("Yjs middleware", () =>
       increment: () => void,
     };
 
-    const { getState } =
-      create<Store>(
-        yjs(
-          new Y.Doc(),
-          "hello",
-          (set) => ({
-            count: 0,
-            increment: () => set((state) => ({ count: state.count + 1 })),
+    const { getState, } =
+      create<Store>(yjs(
+        new Y.Doc(),
+        "hello",
+        (set) =>
+          ({
+            "count": 0,
+            "increment": () =>
+              set((state) =>
+                ({ "count": state.count + 1, })),
           })
-        )
-      );
+      ));
 
     expect(getState().count).toBe(0);
 
@@ -42,28 +43,29 @@ describe("Yjs middleware", () =>
     const doc1 = new Y.Doc();
     const doc2 = new Y.Doc();
 
-    doc1.on('update', (update: any) =>
+    doc1.on("update", (update: any) =>
     {
       Y.applyUpdate(doc2, update);
     });
-    doc2.on('update', (update: any) =>
+    doc2.on("update", (update: any) =>
     {
       Y.applyUpdate(doc1, update);
     });
 
     const storeName = "store";
 
-    const { getState } =
-      create<Store>(
-        yjs(
-          doc1,
-          storeName,
-          (set) => ({
-            count: 0,
-            increment: () => set((state) => ({ count: state.count + 1 })),
+    const { getState, } =
+      create<Store>(yjs(
+        doc1,
+        storeName,
+        (set) =>
+          ({
+            "count": 0,
+            "increment": () =>
+              set((state) =>
+                ({ "count": state.count + 1, })),
           })
-        )
-      );
+      ));
 
     const peerStore = doc2.getMap(storeName);
 
@@ -87,28 +89,29 @@ describe("Yjs middleware", () =>
     const doc1 = new Y.Doc();
     const doc2 = new Y.Doc();
 
-    doc1.on('update', (update: any) =>
+    doc1.on("update", (update: any) =>
     {
       Y.applyUpdate(doc2, update);
     });
-    doc2.on('update', (update: any) =>
+    doc2.on("update", (update: any) =>
     {
       Y.applyUpdate(doc1, update);
     });
 
     const storeName = "store";
 
-    const { getState } =
-      create<Store>(
-        yjs(
-          doc1,
-          storeName,
-          (set) => ({
-            count: 0,
-            increment: () => set((state) => ({ count: state.count + 1 })),
+    const { getState, } =
+      create<Store>(yjs(
+        doc1,
+        storeName,
+        (set) =>
+          ({
+            "count": 0,
+            "increment": () =>
+              set((state) =>
+                ({ "count": state.count + 1, })),
           })
-        )
-      );
+      ));
 
     const peerStore = doc2.getMap(storeName);
 
@@ -132,28 +135,29 @@ describe("Yjs middleware", () =>
     const doc1 = new Y.Doc();
     const doc2 = new Y.Doc();
 
-    doc1.on('update', (update: any) =>
+    doc1.on("update", (update: any) =>
     {
       Y.applyUpdate(doc2, update);
     });
-    doc2.on('update', (update: any) =>
+    doc2.on("update", (update: any) =>
     {
       Y.applyUpdate(doc1, update);
     });
 
     const storeName = "store";
 
-    const { getState } =
-      create<Store>(
-        yjs(
-          doc1,
-          storeName,
-          (set) => ({
-            count: 0,
-            increment: () => set((state) => ({ count: state.count + 1 })),
+    const { getState, } =
+      create<Store>(yjs(
+        doc1,
+        storeName,
+        (set) =>
+          ({
+            "count": 0,
+            "increment": () =>
+              set((state) =>
+                ({ "count": state.count + 1, })),
           })
-        )
-      );
+      ));
 
     const peerStore = doc2.getMap(storeName);
 
@@ -174,37 +178,34 @@ describe("Yjs middleware", () =>
     const doc1 = new Y.Doc();
     const doc2 = new Y.Doc();
 
-    doc1.on('update', (update: any) =>
+    doc1.on("update", (update: any) =>
     {
       Y.applyUpdate(doc2, update);
     });
-    doc2.on('update', (update: any) =>
+    doc2.on("update", (update: any) =>
     {
       Y.applyUpdate(doc1, update);
     });
 
     const storeName = "store";
 
-    const { getState } =
-      create<Store>(
-        yjs(
-          doc1,
-          storeName,
-          (set) => ({
-            person: {
-              age: 0,
-              name: "Joe",
+    const { getState, } =
+      create<Store>(yjs(
+        doc1,
+        storeName,
+        (set) =>
+          ({
+            "person": {
+              "age": 0,
+              "name": "Joe",
             },
-            getOlder: () =>
-              set(
-                (state) =>
+            "getOlder": () =>
+              set((state) =>
                 ({
-                  person: { ...state.person, age: state.person.age + 1 }
-                })
-              ),
+                  "person": { ...state.person, "age": state.person.age + 1, },
+                })),
           })
-        )
-      );
+      ));
 
     const peerStore = doc2.getMap(storeName);
 
@@ -233,55 +234,54 @@ describe("Yjs middleware", () =>
     const doc1 = new Y.Doc();
     const doc2 = new Y.Doc();
 
-    doc1.on('update', (update: any) =>
+    doc1.on("update", (update: any) =>
     {
       Y.applyUpdate(doc2, update);
     });
-    doc2.on('update', (update: any) =>
+    doc2.on("update", (update: any) =>
     {
       Y.applyUpdate(doc1, update);
     });
 
     const storeName = "store";
 
-    const { getState } =
-      create<Store>(
-        yjs(
-          doc1,
-          storeName,
-          (set) => ({
-            owner: {
-              person: {
-                age: 0,
-                name: "Joe",
+    const { getState, } =
+      create<Store>(yjs(
+        doc1,
+        storeName,
+        (set) =>
+          ({
+            "owner": {
+              "person": {
+                "age": 0,
+                "name": "Joe",
               },
             },
-            getOlder: () =>
-              set(
-                (state) =>
+            "getOlder": () =>
+              set((state) =>
                 ({
-                  owner: {
+                  "owner": {
                     ...state.owner,
-                    person: {
+                    "person": {
                       ...state.owner.person,
-                      age: state.owner.person.age + 1,
+                      "age": state.owner.person.age + 1,
                     },
                   },
-                })
-              ),
+                })),
           })
-        )
-      );
+      ));
 
     const peerStore = doc2.getMap(storeName);
 
     expect(getState().owner.person.age).toBe(0);
-    expect(peerStore.get("owner").get("person").get("age")).toBe(0);
+    expect(peerStore.get("owner").get("person")
+      .get("age")).toBe(0);
 
     getState().getOlder();
 
     expect(getState().owner.person.age).toBe(1);
-    expect(peerStore.get("owner").get("person").get("age")).toBe(1);
+    expect(peerStore.get("owner").get("person")
+      .get("age")).toBe(1);
   });
 
   it("Updates arrays in objects.", () =>
@@ -297,55 +297,55 @@ describe("Yjs middleware", () =>
     const doc1 = new Y.Doc();
     const doc2 = new Y.Doc();
 
-    doc1.on('update', (update: any) =>
+    doc1.on("update", (update: any) =>
     {
       Y.applyUpdate(doc2, update);
     });
-    doc2.on('update', (update: any) =>
+    doc2.on("update", (update: any) =>
     {
       Y.applyUpdate(doc1, update);
     });
 
     const storeName = "store";
 
-    const { getState } =
-      create<Store>(
-        yjs(
-          doc1,
-          storeName,
-          (set) => ({
-            room: {
-              users: [
+    const { getState, } =
+      create<Store>(yjs(
+        doc1,
+        storeName,
+        (set) =>
+          ({
+            "room": {
+              "users": [
                 "amy",
                 "sam",
                 "harold"
-              ]
+              ],
             },
-            join: (user) =>
-              set(
-                (state) => ({
-                  room: {
+            "join": (user) =>
+              set((state) =>
+                ({
+                  "room": {
                     ...state.room,
-                    users: [
+                    "users": [
                       ...state.room.users,
                       user
-                    ]
-                  }
-                })
-              )
+                    ],
+                  },
+                })),
           })
-        )
-      );
+      ));
 
     const peerStore = doc2.getMap(storeName);
 
     expect(getState().room.users).toEqual([ "amy", "sam", "harold" ]);
-    expect(peerStore.get("room").get("users").toJSON()).toEqual([ "amy", "sam", "harold" ]);
+    expect(peerStore.get("room").get("users")
+      .toJSON()).toEqual([ "amy", "sam", "harold" ]);
 
     getState().join("bob");
 
     expect(getState().room.users).toEqual([ "amy", "sam", "harold", "bob" ]);
-    expect(peerStore.get("room").get("users").toJSON()).toEqual([ "amy", "sam", "harold", "bob" ]);
+    expect(peerStore.get("room").get("users")
+      .toJSON()).toEqual([ "amy", "sam", "harold", "bob" ]);
   });
 
   it("Updates objects in arrays.", () =>
@@ -359,72 +359,71 @@ describe("Yjs middleware", () =>
     const doc1 = new Y.Doc();
     const doc2 = new Y.Doc();
 
-    doc1.on('update', (update: any) =>
+    doc1.on("update", (update: any) =>
     {
       Y.applyUpdate(doc2, update);
     });
-    doc2.on('update', (update: any) =>
+    doc2.on("update", (update: any) =>
     {
       Y.applyUpdate(doc1, update);
     });
 
     const storeName = "store";
 
-    const { getState } =
-      create<Store>(
-        yjs(
-          doc1,
-          storeName,
-          (set) => ({
-            users: [
+    const { getState, } =
+      create<Store>(yjs(
+        doc1,
+        storeName,
+        (set) =>
+          ({
+            "users": [
               {
-                name: "alice",
-                status: "offline",
+                "name": "alice",
+                "status": "offline",
               },
               {
-                name: "bob",
-                status: "offline",
+                "name": "bob",
+                "status": "offline",
               }
             ],
-            setStatus: (userName, status) =>
+            "setStatus": (userName, status) =>
             {
-              set(
-                (state) => ({
+              set((state) =>
+                ({
                   ...state,
-                  users: [
-                    ...state.users.filter(({ name }) => name !== userName),
+                  "users": [
+                    ...state.users.filter(({ name, }) =>
+                      name !== userName),
                     {
-                      name: userName,
-                      status
+                      "name": userName,
+                      "status": status,
                     }
-                  ]
-                })
-              )
-            }
+                  ],
+                }));
+            },
           })
-        )
-      );
+      ));
 
     const peerStore = doc2.getMap(storeName);
 
     expect(getState().users).toEqual([
-      { name: "alice", status: "offline" },
-      { name: "bob", status: "offline" }
+      { "name": "alice", "status": "offline", },
+      { "name": "bob", "status": "offline", }
     ]);
     expect(peerStore.get("users").toJSON()).toEqual([
-      { name: "alice", status: "offline" },
-      { name: "bob", status: "offline" }
+      { "name": "alice", "status": "offline", },
+      { "name": "bob", "status": "offline", }
     ]);
 
     getState().setStatus("bob", "online");
 
     expect(getState().users).toEqual([
-      { name: "alice", status: "offline" },
-      { name: "bob", status: "online" }
+      { "name": "alice", "status": "offline", },
+      { "name": "bob", "status": "online", }
     ]);
     expect(peerStore.get("users").toJSON()).toEqual([
-      { name: "alice", status: "offline" },
-      { name: "bob", status: "online" }
+      { "name": "alice", "status": "offline", },
+      { "name": "bob", "status": "online", }
     ]);
   });
 });
