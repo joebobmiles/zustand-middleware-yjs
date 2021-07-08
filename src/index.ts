@@ -28,6 +28,15 @@ const stateToYmap = <S extends State>(state: S, ymap = new Y.Map()) =>
   return ymap;
 };
 
+/**
+ * This function is the middleware the sets up the Zustand store to mirror state
+ * into a Yjs store for peer-to-peer synchronization.
+ * 
+ * @param doc The Yjs document to create the store in.
+ * @param name The name that the store should be listed under in the doc.
+ * @param config The initial state of the store we should be using.
+ * @returns A Zustand state creator.
+ */
 export const yjs = <S extends State>(
   doc: Y.Doc,
   name: string,
@@ -37,8 +46,10 @@ export const yjs = <S extends State>(
   // The root Y.Map that the store is written and read from.
   const map: Y.Map<any> = doc.getMap(name);
 
+  // Augment the store.
   return (_set: SetState<S>, _get: GetState<S>, _api: StoreApi<S>): S =>
   {
+    // The new set function.
     const set: SetState<S> = (partial, replace) =>
     {
       const previousState = _get();
@@ -62,8 +73,12 @@ export const yjs = <S extends State>(
       }
     };
 
+    // The new get function.
     const get: GetState<S> = () => _get();
 
+    // Whenever the Yjs store changes, we perform a set operation on the local
+    // Zustand store. We avoid using the Yjs enabled set to prevent unnecessary
+    // ping-pong of updates.
     map.observe((event) =>
     {
       if (event.target === map)
@@ -93,6 +108,8 @@ export const yjs = <S extends State>(
       });
     });
 
+    // Capture the initial state so that we can initialize the Yjs store to the
+    // same values as the initial values of the Zustand store.
     const initialState = config(
       set,
       get,
@@ -103,8 +120,10 @@ export const yjs = <S extends State>(
       }
     );
 
+    // Initialize the Yjs store.
     stateToYmap(initialState, map);
 
+    // Return the initial state to create or the next middleware.
     return initialState;
   };
 };
