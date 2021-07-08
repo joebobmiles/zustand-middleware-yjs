@@ -2,6 +2,7 @@
   "name": "zustand-middleware-yjs",
   "private": "false",
   "description": "Zustand middleware for syncing state with Yjs.",
+  "license": "MIT",
   "keywords": [
     "yjs",
     "zustand",
@@ -21,6 +22,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/joebobmiles/zustand-middleware-yjs"
+  },
+  "bugs": {
+    "url": "https://github.com/joebobmiles/zustand-middleware-yjs/issues"
   },
   "author": {
     "name": "Joseph R Miles",
