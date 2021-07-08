@@ -28,6 +28,69 @@ const stateToYmap = <S extends State>(state: S, ymap = new Y.Map()) =>
   return ymap;
 };
 
+const mapZustandUpdateToYjsUpdate =
+  (stateDiff: any, ymap: Y.Map<any>) =>
+  {
+    const getChange = (property: string, value: any): [
+      "add" | "delete" | "update" | "none",
+      string,
+      any
+    ] =>
+    {
+      if (property.match(/__added$/))
+        return [ "add", property.replace(/__added$/, ""), value ];
+
+      else if (property.match(/__deleted$/))
+        return [ "add", property.replace(/__deleted$/, ""), value ];
+
+      else if (value.__old !== undefined && value.__new !== undefined)
+        return [ "update", property, value.__new ];
+
+      else
+        return [ "none", property, value ];
+    }
+
+    for (const property in stateDiff)
+    {
+      const value = stateDiff[property];
+
+      if (typeof value !== 'function' && typeof value !== 'undefined')
+      {
+        const [ type, actualProperty, newValue ] = getChange(property, value);
+
+        if (typeof newValue !== 'function' && typeof newValue !== 'undefined')
+        {
+          switch (type)
+          {
+            case "delete":
+              // TODO
+              break;
+
+            case "add":
+            case "update":
+              {
+                // TODO
+                if (newValue instanceof Object)
+                  return;
+
+                else
+                  ymap.set(actualProperty, newValue);
+              }
+              break;
+
+            case "none":
+            default:
+              {
+                if (newValue instanceof Object)
+                  mapZustandUpdateToYjsUpdate(newValue, ymap.get(actualProperty));
+              }
+              break;
+          }
+        }
+      }
+    }
+  };
+
 /**
  * This function is the middleware the sets up the Zustand store to mirror state
  * into a Yjs store for peer-to-peer synchronization.
@@ -56,21 +119,7 @@ export const yjs = <S extends State>(
       _set(partial, replace);
       const nextState = _get();
 
-      const stateDiff = diff(previousState, nextState);
-
-      if (stateDiff !== undefined)
-      {
-        for (const property in stateDiff)
-        {
-          if (
-            stateDiff[property] !== undefined &&
-            stateDiff[property].__old !== undefined &&
-            stateDiff[property].__new !== undefined &&
-            typeof (nextState as any)[property] !== 'function'
-          )
-            map.set(property, stateDiff[property].__new);
-        }
-      }
+      mapZustandUpdateToYjsUpdate(diff(previousState, nextState), map);
     };
 
     // The new get function.
