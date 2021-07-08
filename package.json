@@ -1,4 +1,27 @@
 {
+  "name": "zustand-middleware-yjs",
+  "private": "false",
+  "description": "Zustand middleware for syncing state with Yjs.",
+  "keywords": [
+    "yjs",
+    "zustand",
+    "state-mangement",
+    "middleware",
+    "peer-to-peer",
+    "p2p",
+    "distributed",
+    "local-first",
+    "offline-first",
+    "crdt",
+    "decentralized",
+    "shared-editing",
+    "realtime"
+  ],
+  "author": {
+    "name": "Joseph R Miles",
+    "email": "joe@jrm.dev",
+    "url": "https://jrm.dev"
+  },
   "dependencies": {
     "json-diff": "^0.5.4",
     "yjs": "^13.5.11",
