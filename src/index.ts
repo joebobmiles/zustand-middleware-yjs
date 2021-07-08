@@ -2,6 +2,32 @@ import { State, StateCreator, SetState, GetState, StoreApi } from "zustand/vanil
 import * as Y from "yjs";
 import { diff } from "json-diff";
 
+const arrayToYarray = (array: Array<any>): Y.Array<any> =>
+{
+  const yarray = new Y.Array();
+
+  for (const value of array)
+  {
+    if (typeof value !== 'function' && typeof value !== 'undefined')
+    {
+      if (value instanceof Array)
+      {
+        yarray.push([ arrayToYarray(value) ]);
+      }
+      else if (value instanceof Object)
+      {
+        yarray.push([ stateToYmap(value) ]);
+      }
+      else
+      {
+        yarray.push([ value ]);
+      }
+    }
+  }
+
+  return yarray;
+}
+
 const stateToYmap = <S extends State>(state: S, ymap = new Y.Map()) =>
 {
   for (const property in state)
@@ -10,7 +36,7 @@ const stateToYmap = <S extends State>(state: S, ymap = new Y.Map()) =>
     {
       if (state[property] instanceof Array)
       {
-        // TODO
+        ymap.set(property, arrayToYarray((<unknown>state[property]) as Array<any>));
       }
 
       else if (state[property] instanceof Object)
@@ -174,14 +200,6 @@ export const yjs = <S extends State>(
           }
         });
       }
-    });
-
-    map.observeDeep((events) =>
-    {
-      events.forEach((event) =>
-      {
-        console.log(event.path);
-      });
     });
 
     // Return the initial state to create or the next middleware.

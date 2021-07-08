@@ -283,4 +283,68 @@ describe("Yjs middleware", () =>
     expect(getState().owner.person.age).toBe(1);
     expect(peerStore.get("owner").get("person").get("age")).toBe(1);
   });
+
+  it("Updates arrays in objects.", () =>
+  {
+    type Store =
+    {
+      room: {
+        users: string[]
+      },
+      join: (user: string) => void,
+    };
+
+    const doc1 = new Y.Doc();
+    const doc2 = new Y.Doc();
+
+    doc1.on('update', (update: any) =>
+    {
+      Y.applyUpdate(doc2, update);
+    });
+    doc2.on('update', (update: any) =>
+    {
+      Y.applyUpdate(doc1, update);
+    });
+
+    const storeName = "store";
+
+    const { getState } =
+      create<Store>(
+        yjs(
+          doc1,
+          storeName,
+          (set) => ({
+            room: {
+              users: [
+                "amy",
+                "sam",
+                "harold"
+              ]
+            },
+            join: (user) =>
+              set(
+                (state) => ({
+                  room: {
+                    ...state.room,
+                    users: [
+                      ...state.room.users,
+                      user
+                    ]
+                  }
+                })
+              )
+          })
+        )
+      );
+
+    const peerStore = doc2.getMap(storeName);
+
+    expect(getState().room.users).toEqual([ "amy", "sam", "harold" ]);
+    expect(peerStore.get("room").get("users").toJSON()).toEqual([ "amy", "sam", "harold" ]);
+
+    getState().join("bob");
+
+    expect(getState().room.users).toEqual([ "amy", "sam", "harold", "bob" ]);
+    expect(peerStore.get("room").get("users").toJSON()).toEqual([ "amy", "sam", "harold", "bob" ]);
+  });
 });
