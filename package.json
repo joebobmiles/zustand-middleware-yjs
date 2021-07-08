@@ -17,6 +17,11 @@
     "shared-editing",
     "realtime"
   ],
+  "homepage": "https://github.com/joebobmiles/zustand-middleware-yjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joebobmiles/zustand-middleware-yjs"
+  },
   "author": {
     "name": "Joseph R Miles",
     "email": "joe@jrm.dev",
