@@ -36,6 +36,9 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "jest",
     "build": "tsc"
