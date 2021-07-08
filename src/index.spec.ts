@@ -347,4 +347,84 @@ describe("Yjs middleware", () =>
     expect(getState().room.users).toEqual([ "amy", "sam", "harold", "bob" ]);
     expect(peerStore.get("room").get("users").toJSON()).toEqual([ "amy", "sam", "harold", "bob" ]);
   });
+
+  it("Updates objects in arrays.", () =>
+  {
+    type Store =
+    {
+      users: { name: string, status: "online" | "offline" }[],
+      setStatus: (userName: string, status: "online" | "offline") => void,
+    };
+
+    const doc1 = new Y.Doc();
+    const doc2 = new Y.Doc();
+
+    doc1.on('update', (update: any) =>
+    {
+      Y.applyUpdate(doc2, update);
+    });
+    doc2.on('update', (update: any) =>
+    {
+      Y.applyUpdate(doc1, update);
+    });
+
+    const storeName = "store";
+
+    const { getState } =
+      create<Store>(
+        yjs(
+          doc1,
+          storeName,
+          (set) => ({
+            users: [
+              {
+                name: "alice",
+                status: "offline",
+              },
+              {
+                name: "bob",
+                status: "offline",
+              }
+            ],
+            setStatus: (userName, status) =>
+            {
+              set(
+                (state) => ({
+                  ...state,
+                  users: [
+                    ...state.users.filter(({ name }) => name !== userName),
+                    {
+                      name: userName,
+                      status
+                    }
+                  ]
+                })
+              )
+            }
+          })
+        )
+      );
+
+    const peerStore = doc2.getMap(storeName);
+
+    expect(getState().users).toEqual([
+      { name: "alice", status: "offline" },
+      { name: "bob", status: "offline" }
+    ]);
+    expect(peerStore.get("users").toJSON()).toEqual([
+      { name: "alice", status: "offline" },
+      { name: "bob", status: "offline" }
+    ]);
+
+    getState().setStatus("bob", "online");
+
+    expect(getState().users).toEqual([
+      { name: "alice", status: "offline" },
+      { name: "bob", status: "online" }
+    ]);
+    expect(peerStore.get("users").toJSON()).toEqual([
+      { name: "alice", status: "offline" },
+      { name: "bob", status: "online" }
+    ]);
+  });
 });
