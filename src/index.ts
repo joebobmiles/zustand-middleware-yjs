@@ -63,17 +63,34 @@ const mapZustandUpdateToYjsUpdate =
       any
     ] =>
     {
-      if (property.match(/__added$/))
-        return [ "add", property.replace(/__added$/, ""), value ];
+      if (isNaN(parseInt(property, 10)) == false)
+      {
+        switch (value[0])
+        {
+          case "+":
+            return [ "add", property, value ];
 
-      else if (property.match(/__deleted$/))
-        return [ "add", property.replace(/__deleted$/, ""), value ];
+          case "-":
+            return [ "delete", property, undefined ];
 
-      else if (value.__old !== undefined && value.__new !== undefined)
-        return [ "update", property, value.__new ];
-
+          default:
+            return [ "none", property, value ];
+        }
+      }
       else
-        return [ "none", property, value ];
+      {
+        if (property.match(/__added$/))
+          return [ "add", property.replace(/__added$/, ""), value ];
+
+        else if (property.match(/__deleted$/))
+          return [ "delete", property.replace(/__deleted$/, ""), undefined ];
+
+        else if (value.__old !== undefined && value.__new !== undefined)
+          return [ "update", property, value.__new ];
+
+        else
+          return [ "none", property, value ];
+      }
     }
 
     for (const property in stateDiff)
@@ -186,7 +203,10 @@ export const yjs = <S extends State>(
               {
                 const value = map.get(key);
 
-                if (value instanceof Y.Map)
+                if (value instanceof Y.Array)
+                  return <unknown>{ [key]: (value as Y.Array<any>).toJSON() };
+
+                else if (value instanceof Y.Map)
                   return <unknown>{ [key]: (value as Y.Map<any>).toJSON() };
 
                 else
