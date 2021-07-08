@@ -55,7 +55,7 @@ const stateToYmap = <S extends State>(state: S, ymap = new Y.Map()) =>
 };
 
 const mapZustandUpdateToYjsUpdate =
-  (stateDiff: any, ymap: Y.Map<any>) =>
+  (stateDiff: any, sharedType: Y.Map<any> | Y.Array<any>) =>
   {
     const getChange = (property: string, value: any): [
       "add" | "delete" | "update" | "none",
@@ -68,13 +68,13 @@ const mapZustandUpdateToYjsUpdate =
         switch (value[0])
         {
           case "+":
-            return [ "add", property, value ];
+            return [ "add", property, value[1] ];
 
           case "-":
             return [ "delete", property, undefined ];
 
           default:
-            return [ "none", property, value ];
+            return [ "none", property, value[1] ];
         }
       }
       else
@@ -112,12 +112,28 @@ const mapZustandUpdateToYjsUpdate =
             case "add":
             case "update":
               {
-                // TODO
                 if (newValue instanceof Object)
                   return;
 
                 else
-                  ymap.set(actualProperty, newValue);
+                {
+                  if (sharedType instanceof Y.Map)
+                    sharedType.set(actualProperty, newValue);
+
+                  else if (sharedType instanceof Y.Array)
+                  {
+                    const index = parseInt(actualProperty, 10);
+
+                    const left = sharedType.slice(0, index);
+                    const right = sharedType.slice(index+1);
+
+                    sharedType.doc?.transact(() =>
+                    {
+                      sharedType.delete(0, sharedType.length);
+                      sharedType.insert(0, [ ...left, newValue, ...right ]);
+                    })
+                  }
+                }
               }
               break;
 
@@ -125,10 +141,18 @@ const mapZustandUpdateToYjsUpdate =
             default:
               {
                 if (newValue instanceof Object)
-                  mapZustandUpdateToYjsUpdate(
-                    newValue,
-                    ymap.get(actualProperty)
-                  );
+                {
+                  if (sharedType instanceof Y.Map)
+                    mapZustandUpdateToYjsUpdate(
+                      newValue,
+                      sharedType.get(actualProperty)
+                    );
+                  else if (sharedType instanceof Y.Array)
+                    mapZustandUpdateToYjsUpdate(
+                      newValue,
+                      sharedType.get(parseInt(actualProperty, 10))
+                    );
+                }
               }
               break;
           }
@@ -201,10 +225,14 @@ export const yjs = <S extends State>(
             case 'update':
               set(() =>
               {
+
                 const value = map.get(key);
 
                 if (value instanceof Y.Array)
+                {
+                  console.log(value);
                   return <unknown>{ [key]: (value as Y.Array<any>).toJSON() };
+                }
 
                 else if (value instanceof Y.Map)
                   return <unknown>{ [key]: (value as Y.Map<any>).toJSON() };
