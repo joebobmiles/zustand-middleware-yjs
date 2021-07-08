@@ -70,6 +70,12 @@
     ]
   },
   "eslintConfig": {
-    "extends": "@joebobmiles/eslint-config-typescript"
+    "extends": "@joebobmiles/eslint-config-typescript",
+    "parserOptions": {
+      "tsconfigRootDir": ".",
+      "project": [
+        "./tsconfig.lint.json"
+      ]
+    }
   }
 }
