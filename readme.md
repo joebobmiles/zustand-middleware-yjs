@@ -1,5 +1,10 @@
 # Yjs Middleware for Zustand
 
+> **This project is currently in a minimum-viable product (MVP) state.**
+> Consider the current state to be pre-alpha and expect a wealth of bugs. I will
+> be undertaking a major rewrite of this library to lock in requirements,
+> functionality, and scope.
+
 One of the difficult things about using Yjs is that it's not easily integrated
 with modern state management libraries in React. This middleware for Zustand
 solves that problem by allowing a Zustand store to be turned into a CRDT, with
@@ -69,3 +74,15 @@ render(
     document.getElementById("app-root")
 );
 ```
+
+## Caveats
+
+ 1. **This project is currently in a minimum-viable product (MVP) state.**
+    Consider the current state to be pre-alpha and expect a wealth of bugs.
+    I will be undertaking a major rewrite of this library to lock in
+    requirements, functionality, and scope.
+ 1. Currently the Y Text shared type is not supported. This means that strings
+    in the store do not benefit from the conflict-resolution performed by Yjs.
+ 1. The Yjs awareness protocol is not supported. At the moment, it is unclear
+    if the library is able to support Yjs protocols. This means that, for now,
+    support for the awareness protocol is not planned.
