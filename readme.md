@@ -21,7 +21,7 @@ other middleware, such as Immer or Redux!
 
 ## Example
 
-```ts-react
+```tsx
 import React from "react";
 import { render } from "react-dom";
 
