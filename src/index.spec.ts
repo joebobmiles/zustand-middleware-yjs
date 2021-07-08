@@ -160,4 +160,60 @@ describe("Yjs middleware", () =>
     expect(getState().increment).not.toBeUndefined();
     expect(peerStore.get("increment")).toBeUndefined();
   });
+
+  it("Performs nested updates.", () =>
+  {
+    type Store =
+    {
+      person: {
+        age: number,
+      },
+      getOlder: () => void,
+    };
+
+    const doc1 = new Y.Doc();
+    const doc2 = new Y.Doc();
+
+    doc1.on('update', (update: any) =>
+    {
+      Y.applyUpdate(doc2, update);
+    });
+    doc2.on('update', (update: any) =>
+    {
+      Y.applyUpdate(doc1, update);
+    });
+
+    const storeName = "store";
+
+    const { getState } =
+      create<Store>(
+        yjs(
+          doc1,
+          storeName,
+          (set) => ({
+            person: {
+              age: 0,
+              name: "Joe",
+            },
+            getOlder: () =>
+              set(
+                (state) =>
+                ({
+                  person: { ...state.person, age: state.person.age + 1 }
+                })
+              ),
+          })
+        )
+      );
+
+    const peerStore = doc2.getMap(storeName);
+
+    expect(getState().person.age).toBe(0);
+    expect(peerStore.get("person").get("age")).toBe(0);
+
+    getState().getOlder();
+
+    expect(getState().person.age).toBe(1);
+    expect(peerStore.get("person").get("age")).toBe(1);
+  });
 });

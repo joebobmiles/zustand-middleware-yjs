@@ -2,6 +2,32 @@ import { State, StateCreator, SetState, GetState, StoreApi } from "zustand/vanil
 import * as Y from "yjs";
 import { diff } from "json-diff";
 
+const stateToYmap = <S extends State>(state: S, ymap = new Y.Map()) =>
+{
+  for (const property in state)
+  {
+    if (typeof state[property] !== 'function' && typeof state[property] !== 'undefined')
+    {
+      if (state[property] instanceof Array)
+      {
+        // TODO
+      }
+
+      else if (state[property] instanceof Object)
+      {
+        ymap.set(property, stateToYmap((<unknown>state[property]) as object));
+      }
+
+      else
+      {
+        ymap.set(property, state[property]);
+      }
+    }
+  }
+  
+  return ymap;
+};
+
 export const yjs = <S extends State>(
   doc: Y.Doc,
   name: string,
@@ -59,6 +85,14 @@ export const yjs = <S extends State>(
       }
     });
 
+    map.observeDeep((events) =>
+    {
+      events.forEach((event) =>
+      {
+        console.log(event.path);
+      });
+    });
+
     const initialState = config(
       set,
       get,
@@ -69,9 +103,7 @@ export const yjs = <S extends State>(
       }
     );
 
-    for (const property in initialState)
-      if (typeof initialState[property] !== 'function')
-        map.set(property, initialState[property]);
+    stateToYmap(initialState, map);
 
     return initialState;
   };
