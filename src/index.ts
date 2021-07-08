@@ -180,7 +180,7 @@ export const yjs = <S extends State>(
     {
       events.forEach((event) =>
       {
-        // console.log(event.path);
+        console.log(event.path);
       });
     });
 

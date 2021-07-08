@@ -216,4 +216,71 @@ describe("Yjs middleware", () =>
     expect(getState().person.age).toBe(1);
     expect(peerStore.get("person").get("age")).toBe(1);
   });
+
+  it("Performs deep nested updates.", () =>
+  {
+    type Store =
+    {
+      owner: {
+        person: {
+          age: number,
+          name: string,
+        },
+      },
+      getOlder: () => void,
+    };
+
+    const doc1 = new Y.Doc();
+    const doc2 = new Y.Doc();
+
+    doc1.on('update', (update: any) =>
+    {
+      Y.applyUpdate(doc2, update);
+    });
+    doc2.on('update', (update: any) =>
+    {
+      Y.applyUpdate(doc1, update);
+    });
+
+    const storeName = "store";
+
+    const { getState } =
+      create<Store>(
+        yjs(
+          doc1,
+          storeName,
+          (set) => ({
+            owner: {
+              person: {
+                age: 0,
+                name: "Joe",
+              },
+            },
+            getOlder: () =>
+              set(
+                (state) =>
+                ({
+                  owner: {
+                    ...state.owner,
+                    person: {
+                      ...state.owner.person,
+                      age: state.owner.person.age + 1,
+                    },
+                  },
+                })
+              ),
+          })
+        )
+      );
+
+    const peerStore = doc2.getMap(storeName);
+
+    expect(getState().owner.person.age).toBe(0);
+    expect(peerStore.get("owner").get("person").get("age")).toBe(0);
+
+    getState().getOlder();
+
+    expect(getState().owner.person.age).toBe(1);
+    expect(peerStore.get("owner").get("person").get("age")).toBe(1);
+  });
 });
