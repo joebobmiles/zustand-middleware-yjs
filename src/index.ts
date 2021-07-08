@@ -82,7 +82,10 @@ const mapZustandUpdateToYjsUpdate =
             default:
               {
                 if (newValue instanceof Object)
-                  mapZustandUpdateToYjsUpdate(newValue, ymap.get(actualProperty));
+                  mapZustandUpdateToYjsUpdate(
+                    newValue,
+                    ymap.get(actualProperty)
+                  );
               }
               break;
           }
@@ -125,38 +128,6 @@ export const yjs = <S extends State>(
     // The new get function.
     const get: GetState<S> = () => _get();
 
-    // Whenever the Yjs store changes, we perform a set operation on the local
-    // Zustand store. We avoid using the Yjs enabled set to prevent unnecessary
-    // ping-pong of updates.
-    map.observe((event) =>
-    {
-      if (event.target === map)
-      {
-        event.changes.keys.forEach((change, key) =>
-        {
-          switch (change.action)
-          {
-            case 'add':
-            case 'update':
-              set(() => <unknown>({ [key]: map.get(key) }));
-              break;
-
-            case 'delete':
-            default:
-              break;
-          }
-        });
-      }
-    });
-
-    map.observeDeep((events) =>
-    {
-      events.forEach((event) =>
-      {
-        console.log(event.path);
-      });
-    });
-
     // Capture the initial state so that we can initialize the Yjs store to the
     // same values as the initial values of the Zustand store.
     const initialState = config(
@@ -171,6 +142,47 @@ export const yjs = <S extends State>(
 
     // Initialize the Yjs store.
     stateToYmap(initialState, map);
+
+    // Whenever the Yjs store changes, we perform a set operation on the local
+    // Zustand store. We avoid using the Yjs enabled set to prevent unnecessary
+    // ping-pong of updates.
+    map.observe((event) =>
+    {
+      if (event.target === map)
+      {
+        event.changes.keys.forEach((change, key) =>
+        {
+          switch (change.action)
+          {
+            case 'add':
+            case 'update':
+              set(() =>
+              {
+                const value = map.get(key);
+
+                if (value instanceof Y.Map)
+                  return <unknown>{ [key]: (value as Y.Map<any>).toJSON() };
+
+                else
+                  return <unknown>{ [key]: value };
+              });
+              break;
+
+            case 'delete':
+            default:
+              break;
+          }
+        });
+      }
+    });
+
+    map.observeDeep((events) =>
+    {
+      events.forEach((event) =>
+      {
+        // console.log(event.path);
+      });
+    });
 
     // Return the initial state to create or the next middleware.
     return initialState;
