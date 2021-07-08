@@ -41,7 +41,8 @@
   },
   "scripts": {
     "test": "jest",
-    "build": "tsc"
+    "build": "tsc",
+    "prepare": "husky install"
   },
   "dependencies": {
     "json-diff": "^0.5.4",
@@ -53,6 +54,7 @@
     "@types/jest": "^26.0.24",
     "@types/json-diff": "^0.5.1",
     "commitlint-config-gitmoji": "^2.2.5",
+    "husky": "^7.0.1",
     "jest": "^27.0.6",
     "semantic-release": "^17.4.4",
     "semantic-release-config-gitmoji": "^1.2.4",
