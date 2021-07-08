@@ -22,6 +22,10 @@
     "email": "joe@jrm.dev",
     "url": "https://jrm.dev"
   },
+  "scripts": {
+    "test": "jest",
+    "build": "tsc"
+  },
   "dependencies": {
     "json-diff": "^0.5.4",
     "yjs": "^13.5.11",
