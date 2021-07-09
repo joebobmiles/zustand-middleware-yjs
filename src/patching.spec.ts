@@ -172,4 +172,14 @@ describe("patchSharedType", () =>
     expect(ymap.get("array").get(0)).toBe(2);
     expect(ymap.get("array").get(1)).toBe(3);
   });
+
+  it("Applies additions to arrays nested in arrays.", () =>
+  {
+    ymap.set("array", arrayToYArray([ 1, [ ] ]));
+    patchSharedType(ymap.get("array"), [ 1, [ 2 ] ]);
+
+    expect(ymap.get("array")
+      .get(1)
+      .get(0)).toBe(2);
+  });
 });
