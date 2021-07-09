@@ -64,6 +64,12 @@ describe("yArrayToArray", () =>
     ],
     [
       [ 1, 2, 3, 4 ]
+    ],
+    [
+      [ [] ]
+    ],
+    [
+      [ 1, [ 2, 3 ] ]
     ]
   ])("Converts a YArray of %s to an array", (array) =>
   {
