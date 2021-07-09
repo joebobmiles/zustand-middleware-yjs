@@ -81,6 +81,12 @@ export const patchSharedType = (
 
       break;
 
+    case "delete":
+      if (sharedType instanceof Y.Map)
+        sharedType.delete(property as string);
+
+      break;
+
     default:
       break;
     }

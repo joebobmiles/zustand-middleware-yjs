@@ -101,4 +101,15 @@ describe("patchSharedType", () =>
 
     expect(ymap.get("state").get("foo")).toBe(2);
   });
+
+  it("Applies deletes to the given shared type.", () =>
+  {
+    const ydoc = new Y.Doc();
+    const ymap = ydoc.getMap("tmp");
+
+    ymap.set("state", objectToYMap({ "foo": 1, }));
+    patchSharedType({ "foo": 1, }, { }, ymap.get("state"));
+
+    expect(Array.from(ymap.get("state").keys())).toEqual([]);
+  });
 });
