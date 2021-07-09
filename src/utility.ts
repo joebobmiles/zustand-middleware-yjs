@@ -28,7 +28,10 @@ export const objectToYMap = (object: any): Y.Map<any> =>
 
   Object.entries(object).forEach(([ property, value ]) =>
   {
-    if (value instanceof Object)
+    if (value instanceof Array)
+      ymap.set(property, arrayToYArray(value));
+
+    else if (value instanceof Object)
       ymap.set(property, objectToYMap(value));
 
     else

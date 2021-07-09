@@ -153,6 +153,20 @@ describe("objectToYMap", () =>
       .get("bar"))
       .toBe(2);
   });
+
+  it("Converts nested arrays into nested YArrays.", () =>
+  {
+    const ydoc = new Y.Doc();
+    const ymap = ydoc.getMap("tmp");
+
+    ymap.set("map", objectToYMap({ "foo": [ 1, 2 ], }));
+
+    expect(ymap.get("map").toJSON()).toEqual({ "foo": [ 1, 2 ], });
+    expect(ymap.get("map").get("foo")
+      .get(0)).toBe(1);
+    expect(ymap.get("map").get("foo")
+      .get(1)).toBe(2);
+  });
 });
 
 describe("yMapToObject", () =>
