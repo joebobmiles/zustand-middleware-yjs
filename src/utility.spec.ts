@@ -177,3 +177,26 @@ describe("yMapToObject", () =>
     expect(yMapToObject(ymap)).toEqual({ "foo": { "bar": 2, }, });
   });
 });
+
+describe("objectToYMap and yMapToObject are inverses", () =>
+{
+  it.each([
+    [
+      {}
+    ],
+    [
+      { "foo": 1, }
+    ],
+    [
+      { "foo": { "bar": 2, }, }
+    ]
+  ])("Converts objects back into their original forms. (#%#)", (object) =>
+  {
+    const ydoc = new Y.Doc();
+    const ymap = ydoc.getMap("tmp");
+
+    ymap.set("map", objectToYMap(object));
+
+    expect(yMapToObject(ymap.get("map"))).toEqual(object);
+  });
+});
