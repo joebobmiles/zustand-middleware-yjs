@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import { arrayToYArray, objectToYMap, yArrayToArray, } from "./utility";
+import { arrayToYArray, objectToYMap, yArrayToArray, yMapToObject, } from "./utility";
 
 describe("arrayToYArray", () =>
 {
@@ -138,5 +138,37 @@ describe("objectToYMap", () =>
     expect(ymap.get("map").get("foo")
       .get("bar"))
       .toBe(2);
+  });
+});
+
+describe("yMapToObject", () =>
+{
+  it("Converts an empty YMap to an empty object.", () =>
+  {
+    const ydoc = new Y.Doc();
+    const ymap = ydoc.getMap("tmp");
+
+    expect(yMapToObject(ymap)).toEqual({});
+  });
+
+  it("Converts a non-empty YMap to a non-empty object.", () =>
+  {
+    const ydoc = new Y.Doc();
+    const ymap = ydoc.getMap("tmp");
+
+    ymap.set("foo", 1);
+
+    expect(yMapToObject(ymap)).toEqual({ "foo": 1, });
+  });
+
+  it("Converts nested YMaps to nested objects.", () =>
+  {
+    const ydoc = new Y.Doc();
+    const ymap = ydoc.getMap("tmp");
+
+    ymap.set("foo", new Y.Map());
+    ymap.get("foo").set("bar", 2);
+
+    expect(yMapToObject(ymap)).toEqual({ "foo": { "bar": 2, }, });
   });
 });

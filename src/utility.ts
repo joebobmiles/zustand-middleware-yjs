@@ -34,3 +34,6 @@ export const objectToYMap = (object: any): Y.Map<any> =>
 
   return ymap;
 };
+
+export const yMapToObject = (ymap: Y.Map<any>): any =>
+  ymap.toJSON();
