@@ -1,3 +1,4 @@
+import * as Y from "yjs";
 import { diff, } from "json-diff";
 
 export type Change = [
@@ -59,4 +60,29 @@ export const getChangeList = (a: any, b: any): Change[] =>
   }
 
   return changes;
+};
+
+export const patchSharedType = (
+  a: any,
+  b: any,
+  sharedType: Y.Map<any> | Y.Array<any>
+): any =>
+{
+  const changes = getChangeList(a, b);
+
+  changes.forEach(([ type, property, value ]) =>
+  {
+    switch (type)
+    {
+    case "add":
+    case "update":
+      if (sharedType instanceof Y.Map)
+        sharedType.set(property as string, value);
+
+      break;
+
+    default:
+      break;
+    }
+  });
 };

@@ -1,4 +1,6 @@
-import { getChangeList, } from "./patching";
+import * as Y from "yjs";
+import { objectToYMap, } from "./mapping";
+import { getChangeList, patchSharedType, } from "./patching";
 
 describe("getChangeList", () =>
 {
@@ -74,4 +76,29 @@ describe("getChangeList", () =>
         .toEqual([ change ]);
     }
   );
+});
+
+describe("patchSharedType", () =>
+{
+  it("Applies additions to the given shared type.", () =>
+  {
+    const ydoc = new Y.Doc();
+    const ymap = ydoc.getMap("tmp");
+
+    ymap.set("state", objectToYMap({ }));
+    patchSharedType({ }, { "foo": 1, }, ymap.get("state"));
+
+    expect(ymap.get("state").get("foo")).toBe(1);
+  });
+
+  it("Applies updates to the given shared type.", () =>
+  {
+    const ydoc = new Y.Doc();
+    const ymap = ydoc.getMap("tmp");
+
+    ymap.set("state", objectToYMap({ "foo": 1, }));
+    patchSharedType({ "foo": 1, }, { "foo": 2, }, ymap.get("state"));
+
+    expect(ymap.get("state").get("foo")).toBe(2);
+  });
 });
