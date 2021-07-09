@@ -18,3 +18,15 @@ export const arrayToYArray = (array: any[]): Y.Array<any> =>
 
 export const yArrayToArray = (yarray: Y.Array<any>): any[] =>
   yarray.toJSON();
+
+export const objectToYMap = (object: any): Y.Map<any> =>
+{
+  const ymap = new Y.Map();
+
+  Object.entries(object).forEach(([ property, value ]) =>
+  {
+    ymap.set(property, value);
+  });
+
+  return ymap;
+};

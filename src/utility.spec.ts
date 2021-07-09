@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import { arrayToYArray, yArrayToArray, } from "./utility";
+import { arrayToYArray, objectToYMap, yArrayToArray, } from "./utility";
 
 describe("arrayToYArray", () =>
 {
@@ -102,5 +102,28 @@ describe("arrayToYArray and yArrayToArray are inverses", () =>
     ymap.set("array", arrayToYArray(array));
 
     expect(yArrayToArray(ymap.get("array"))).toEqual(array);
+  });
+});
+
+describe("objectToYMap", () =>
+{
+  it("Converts an empty object into an empty YMap.", () =>
+  {
+    const ydoc = new Y.Doc();
+    const ymap = ydoc.getMap("tmp");
+
+    ymap.set("map", objectToYMap({}));
+
+    expect(ymap.get("map").toJSON()).toEqual({});
+  });
+
+  it("Converts an non-empty object into a YMap with the same entries.", () =>
+  {
+    const ydoc = new Y.Doc();
+    const ymap = ydoc.getMap("tmp");
+
+    ymap.set("map", objectToYMap({ "foo": 1, }));
+
+    expect(ymap.get("map").toJSON()).toEqual({ "foo": 1, });
   });
 });
