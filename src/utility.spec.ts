@@ -32,4 +32,23 @@ describe("arrayToYArray", () =>
     ymap.set("array", arrayToYArray(array));
     expect(ymap.get("array").toJSON()).toEqual(array);
   });
+
+  it.each([
+    [
+      [ [] ], 0
+    ],
+    [
+      [ 1, [ 2, 3 ] ], 1
+    ]
+  ])(
+    "Creates nested YArrays from %s.",
+    (array: any[], nestedArrayIndex: number) =>
+    {
+      ymap.set("array", arrayToYArray(array));
+
+      expect(ymap.get("array").toJSON()).toEqual(array);
+      expect((ymap.get("array").get(nestedArrayIndex) as Y.Array<any>).toJSON())
+        .toEqual(array[nestedArrayIndex]);
+    }
+  );
 });
