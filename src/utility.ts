@@ -25,7 +25,11 @@ export const objectToYMap = (object: any): Y.Map<any> =>
 
   Object.entries(object).forEach(([ property, value ]) =>
   {
-    ymap.set(property, value);
+    if (value instanceof Object)
+      ymap.set(property, objectToYMap(value));
+
+    else
+      ymap.set(property, value);
   });
 
   return ymap;
