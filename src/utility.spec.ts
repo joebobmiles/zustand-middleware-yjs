@@ -1,5 +1,10 @@
 import * as Y from "yjs";
-import { arrayToYArray, objectToYMap, yArrayToArray, yMapToObject, } from "./utility";
+import {
+  arrayToYArray,
+  objectToYMap,
+  yArrayToArray,
+  yMapToObject,
+} from "./utility";
 
 describe("arrayToYArray", () =>
 {
