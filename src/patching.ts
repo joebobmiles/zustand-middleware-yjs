@@ -86,6 +86,16 @@ export const patchSharedType = (
 
       break;
 
+    case "pending":
+      if (sharedType instanceof Y.Map)
+      {
+        patchSharedType(
+          sharedType.get(property as string),
+          update[property as string]
+        );
+      }
+      break;
+
     default:
       break;
     }

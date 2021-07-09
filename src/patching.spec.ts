@@ -80,11 +80,22 @@ describe("getChangeList", () =>
 
 describe("patchSharedType", () =>
 {
+  let ydoc: Y.Doc = new Y.Doc();
+  let ymap: Y.Map<any> = new Y.Map();
+
+  beforeEach(() =>
+  {
+    ydoc = new Y.Doc();
+    ymap = ydoc.getMap("tmp");
+  });
+
+  afterEach(() =>
+  {
+    ydoc.destroy();
+  });
+
   it("Applies additions to the given shared type.", () =>
   {
-    const ydoc = new Y.Doc();
-    const ymap = ydoc.getMap("tmp");
-
     ymap.set("state", objectToYMap({ }));
     patchSharedType(ymap.get("state"), { "foo": 1, });
 
@@ -93,9 +104,6 @@ describe("patchSharedType", () =>
 
   it("Applies updates to the given shared type.", () =>
   {
-    const ydoc = new Y.Doc();
-    const ymap = ydoc.getMap("tmp");
-
     ymap.set("state", objectToYMap({ "foo": 1, }));
     patchSharedType(ymap.get("state"), { "foo": 2, });
 
@@ -104,12 +112,19 @@ describe("patchSharedType", () =>
 
   it("Applies deletes to the given shared type.", () =>
   {
-    const ydoc = new Y.Doc();
-    const ymap = ydoc.getMap("tmp");
-
     ymap.set("state", objectToYMap({ "foo": 1, }));
     patchSharedType(ymap.get("state"), { });
 
     expect(Array.from(ymap.get("state").keys())).toEqual([]);
+  });
+
+  it("Applies nested additions to the given shared type.", () =>
+  {
+    ymap.set("state", objectToYMap({ "foo": { "bar": 1, }, }));
+    patchSharedType(ymap.get("state"), { "foo": { "bar": 2, }, });
+
+    expect(ymap.get("state")
+      .get("foo")
+      .get("bar")).toBe(2);
   });
 });
