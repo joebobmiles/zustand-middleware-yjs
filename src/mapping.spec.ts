@@ -4,7 +4,7 @@ import {
   objectToYMap,
   yArrayToArray,
   yMapToObject,
-} from "./utility";
+} from "./mapping";
 
 describe("arrayToYArray", () =>
 {
