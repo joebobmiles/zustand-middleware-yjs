@@ -56,6 +56,15 @@ describe("arrayToYArray", () =>
         .toEqual(array[nestedArrayIndex]);
     }
   );
+
+  it("Creates YMaps nested in YArrays from objects nested in arrays.", () =>
+  {
+    ymap.set("array", arrayToYArray([ { "foo": 1, } ]));
+
+    expect(ymap.get("array").toJSON()).toEqual([ { "foo": 1, } ]);
+    expect(ymap.get("array").get(0)
+      .get("foo")).toBe(1);
+  });
 });
 
 describe("yArrayToArray", () =>

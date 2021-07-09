@@ -9,6 +9,9 @@ export const arrayToYArray = (array: any[]): Y.Array<any> =>
     if (value instanceof Array)
       yarray.push([ arrayToYArray(value) ]);
 
+    else if (value instanceof Object)
+      yarray.push([ objectToYMap(value) ]);
+
     else
       yarray.push([ value ]);
   });
