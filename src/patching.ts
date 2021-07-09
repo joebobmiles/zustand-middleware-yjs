@@ -9,11 +9,10 @@ export type Change = [
 export const getChangeList = (a: any, b: any): Change[] =>
 {
   const delta = diff(a, b);
+  const changes: Change[] = [];
 
   if (delta instanceof Array)
   {
-    const patch: Change[] = [];
-
     let offset = 0;
 
     delta.forEach(([ type, value ], index) =>
@@ -21,46 +20,43 @@ export const getChangeList = (a: any, b: any): Change[] =>
       switch (type)
       {
       case "+":
-        if (0 < patch.length && patch[patch.length-1][0] === "delete") offset--;
-        patch.push([ "add", index + offset, value ]);
+        if (0 < changes.length && changes[changes.length-1][0] === "delete")
+          offset--;
+
+        changes.push([ "add", index + offset, value ]);
+
         break;
 
       case "-":
-        patch.push([ "delete", index + offset, undefined ]);
+        changes.push([ "delete", index + offset, undefined ]);
         break;
 
       case "~":
-        patch.push([ "pending", index + offset, undefined ]);
+        changes.push([ "pending", index + offset, undefined ]);
         break;
 
       default:
         break;
       }
     });
-
-    return patch;
   }
   else if (delta instanceof Object)
   {
-    const patch: Change[] = [];
-
     (Object.entries(delta) as [ string, any ]).forEach(([ property, value ]) =>
     {
       if (property.match(/__added$/))
-        patch.push([ "add", property.replace(/__added$/, ""), value ]);
+        changes.push([ "add", property.replace(/__added$/, ""), value ]);
 
       else if (property.match(/__deleted$/))
-        patch.push([ "delete", property.replace(/__deleted$/, ""), undefined ]);
+        changes.push([ "delete", property.replace(/__deleted$/, ""), undefined ]);
 
       else if (value.__old !== undefined && value.__new !== undefined)
-        patch.push([ "update", property, value.__new ]);
+        changes.push([ "update", property, value.__new ]);
 
       else if (value instanceof Object)
-        patch.push([ "pending", property, undefined ]);
+        changes.push([ "pending", property, undefined ]);
     });
-
-    return patch;
   }
-  else
-    return [];
+
+  return changes;
 };
