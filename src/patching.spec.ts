@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import { objectToYMap, } from "./mapping";
+import { arrayToYArray, objectToYMap, } from "./mapping";
 import { getChangeList, patchSharedType, } from "./patching";
 
 describe("getChangeList", () =>
@@ -94,7 +94,7 @@ describe("patchSharedType", () =>
     ydoc.destroy();
   });
 
-  it("Applies additions to the given shared type.", () =>
+  it("Applies additions to maps.", () =>
   {
     ymap.set("state", objectToYMap({ }));
     patchSharedType(ymap.get("state"), { "foo": 1, });
@@ -102,7 +102,7 @@ describe("patchSharedType", () =>
     expect(ymap.get("state").get("foo")).toBe(1);
   });
 
-  it("Applies updates to the given shared type.", () =>
+  it("Applies updates to maps.", () =>
   {
     ymap.set("state", objectToYMap({ "foo": 1, }));
     patchSharedType(ymap.get("state"), { "foo": 2, });
@@ -110,7 +110,7 @@ describe("patchSharedType", () =>
     expect(ymap.get("state").get("foo")).toBe(2);
   });
 
-  it("Applies deletes to the given shared type.", () =>
+  it("Applies deletes to maps.", () =>
   {
     ymap.set("state", objectToYMap({ "foo": 1, }));
     patchSharedType(ymap.get("state"), { });
@@ -118,7 +118,17 @@ describe("patchSharedType", () =>
     expect(Array.from(ymap.get("state").keys())).toEqual([]);
   });
 
-  it("Applies nested additions to the given shared type.", () =>
+  it("Applies additions to maps nested in maps.", () =>
+  {
+    ymap.set("state", objectToYMap({ "foo": { }, }));
+    patchSharedType(ymap.get("state"), { "foo": { "bar": 2, }, });
+
+    expect(ymap.get("state")
+      .get("foo")
+      .get("bar")).toBe(2);
+  });
+
+  it("Applies updates to maps nested in maps.", () =>
   {
     ymap.set("state", objectToYMap({ "foo": { "bar": 1, }, }));
     patchSharedType(ymap.get("state"), { "foo": { "bar": 2, }, });
@@ -126,5 +136,23 @@ describe("patchSharedType", () =>
     expect(ymap.get("state")
       .get("foo")
       .get("bar")).toBe(2);
+  });
+
+  it("Applies deletions to maps nested in maps.", () =>
+  {
+    ymap.set("state", objectToYMap({ "foo": { "bar": 1, }, }));
+    patchSharedType(ymap.get("state"), { "foo": { }, });
+
+    expect(Array.from(ymap.get("state")
+      .get("foo")
+      .keys())).toEqual([]);
+  });
+
+  it("Applies additions to arrays.", () =>
+  {
+    ymap.set("array", arrayToYArray([ ]));
+    patchSharedType(ymap.get("array"), [ 1 ]);
+
+    expect(ymap.get("array").get(0)).toBe(1);
   });
 });

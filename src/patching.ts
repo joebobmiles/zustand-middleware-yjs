@@ -78,6 +78,17 @@ export const patchSharedType = (
       if (sharedType instanceof Y.Map)
         sharedType.set(property as string, value);
 
+      else if (sharedType instanceof Y.Array)
+      {
+        const index = property as number;
+
+        const left = sharedType.slice(0, index);
+        const right = sharedType.slice(index+1);
+
+        sharedType.delete(0, sharedType.length);
+        sharedType.insert(0, [ ...left, value, ...right ]);
+      }
+
       break;
 
     case "delete":
