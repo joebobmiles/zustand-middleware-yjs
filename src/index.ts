@@ -17,15 +17,12 @@ const arrayToYarray = (array: Array<any>): Y.Array<any> =>
     if (typeof value !== "function" && typeof value !== "undefined")
     {
       if (value instanceof Array)
-
         yarray.push([ arrayToYarray(value) ]);
 
       else if (value instanceof Object)
-
         yarray.push([ stateToYmap(value) ]);
 
       else
-
         yarray.push([ value ]);
 
     }

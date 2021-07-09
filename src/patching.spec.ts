@@ -10,22 +10,36 @@ describe("getChangeList", () =>
     }
   );
 
-  it(
-    "Should create an add entry when b contains a new item.",
-    () =>
+  it.each([
+    [
+      {},
+      { "foo": 1, },
+      [ "add", "foo", 1 ]
+    ],
+    [
+      [],
+      [ 1 ],
+      [ "add", 0, 1 ]
+    ]
+  ])(
+    "Should create an add entry when b contains a new item. (#%#)",
+    (a, b, change) =>
     {
-      expect(getChangeList({}, { "foo": 1, })).toEqual([ [ "add", "foo", 1 ] ]);
+      expect(getChangeList(a, b)).toEqual([ change ]);
     }
   );
 
-  it(
-    "Should create an update entry when b contains a new value.",
-    () =>
-    {
-      expect(getChangeList({ "foo": 1, }, { "foo": 2, }))
-        .toEqual([ [ "update", "foo", 2 ] ]);
-    }
-  );
+  it("Should create an update entry when b contains a new value.", () =>
+  {
+    expect(getChangeList( { "foo": 1, }, { "foo": 2, }))
+      .toEqual([ [ "update", "foo", 2 ] ]);
+  });
+
+  it("Should create an add and delete entry when an array changes.", () =>
+  {
+    expect(getChangeList( [ 1 ], [ 2 ]))
+      .toEqual([ [ "delete", 0, undefined ], [ "add", 0, 2 ] ]);
+  });
 
   it(
     "Should create a delete entry when b is missing a value.",
@@ -39,18 +53,25 @@ describe("getChangeList", () =>
   it.each([
     [
       { "foo": { "bar": 1, }, },
-      { "foo": { "bar": 2, }, }
+      { "foo": { "bar": 2, }, },
+      [ "pending", "foo", undefined ]
     ],
     [
       { "foo": [ 1 ], },
-      { "foo": [ 1, 2 ], }
+      { "foo": [ 1, 2 ], },
+      [ "pending", "foo", undefined ]
+    ],
+    [
+      [ { "foo": 1, "bar": 3, } ],
+      [ { "foo": 2, "bar": 3, } ],
+      [ "pending", 0, undefined ]
     ]
   ])(
     "Should create a pending entry when a and b have nested data. (#%#)",
-    (a, b) =>
+    (a, b, change) =>
     {
       expect(getChangeList(a, b))
-        .toEqual([ [ "pending", "foo", undefined ] ]);
+        .toEqual([ change ]);
     }
   );
 });
