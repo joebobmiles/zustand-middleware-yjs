@@ -155,4 +155,21 @@ describe("patchSharedType", () =>
 
     expect(ymap.get("array").get(0)).toBe(1);
   });
+
+  it("Applies deletions to arrays.", () =>
+  {
+    ymap.set("array", arrayToYArray([ 1 ]));
+    patchSharedType(ymap.get("array"), [ ]);
+
+    expect(ymap.get("array").length).toBe(0);
+  });
+
+  it("Combines additions and deletions into updates for arrays", () =>
+  {
+    ymap.set("array", arrayToYArray([ 1 ]));
+    patchSharedType(ymap.get("array"), [ 2, 3 ]);
+
+    expect(ymap.get("array").get(0)).toBe(2);
+    expect(ymap.get("array").get(1)).toBe(3);
+  });
 });

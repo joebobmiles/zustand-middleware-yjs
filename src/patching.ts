@@ -95,6 +95,9 @@ export const patchSharedType = (
       if (sharedType instanceof Y.Map)
         sharedType.delete(property as string);
 
+      else if (sharedType instanceof Y.Array)
+        sharedType.delete(property as number, 1);
+
       break;
 
     case "pending":
