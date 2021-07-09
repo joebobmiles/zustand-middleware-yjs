@@ -15,3 +15,6 @@ export const arrayToYArray = (array: any[]): Y.Array<any> =>
 
   return yarray;
 };
+
+export const yArrayToArray = (yarray: Y.Array<any>): any[] =>
+  yarray.toJSON();
