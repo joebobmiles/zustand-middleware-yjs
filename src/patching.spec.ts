@@ -86,7 +86,7 @@ describe("patchSharedType", () =>
     const ymap = ydoc.getMap("tmp");
 
     ymap.set("state", objectToYMap({ }));
-    patchSharedType({ }, { "foo": 1, }, ymap.get("state"));
+    patchSharedType(ymap.get("state"), { "foo": 1, });
 
     expect(ymap.get("state").get("foo")).toBe(1);
   });
@@ -97,7 +97,7 @@ describe("patchSharedType", () =>
     const ymap = ydoc.getMap("tmp");
 
     ymap.set("state", objectToYMap({ "foo": 1, }));
-    patchSharedType({ "foo": 1, }, { "foo": 2, }, ymap.get("state"));
+    patchSharedType(ymap.get("state"), { "foo": 2, });
 
     expect(ymap.get("state").get("foo")).toBe(2);
   });
@@ -108,7 +108,7 @@ describe("patchSharedType", () =>
     const ymap = ydoc.getMap("tmp");
 
     ymap.set("state", objectToYMap({ "foo": 1, }));
-    patchSharedType({ "foo": 1, }, { }, ymap.get("state"));
+    patchSharedType(ymap.get("state"), { });
 
     expect(Array.from(ymap.get("state").keys())).toEqual([]);
   });

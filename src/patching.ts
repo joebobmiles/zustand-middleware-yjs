@@ -63,12 +63,11 @@ export const getChangeList = (a: any, b: any): Change[] =>
 };
 
 export const patchSharedType = (
-  a: any,
-  b: any,
-  sharedType: Y.Map<any> | Y.Array<any>
+  sharedType: Y.Map<any> | Y.Array<any>,
+  update: any
 ): any =>
 {
-  const changes = getChangeList(a, b);
+  const changes = getChangeList(sharedType.toJSON(), update);
 
   changes.forEach(([ type, property, value ]) =>
   {
