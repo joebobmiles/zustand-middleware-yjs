@@ -81,3 +81,26 @@ describe("yArrayToArray", () =>
     expect(yArrayToArray(yarray)).toEqual(array);
   });
 });
+
+describe("arrayToYArray and yArrayToArray are inverses", () =>
+{
+  it.each([
+    [
+      []
+    ],
+    [
+      [ 1 ]
+    ],
+    [
+      [ 1, 2, 3, 4 ]
+    ]
+  ])("Converts arrays back into their original form. (#%#)", (array) =>
+  {
+    const ydoc = new Y.Doc();
+    const ymap = ydoc.getMap("tmp");
+
+    ymap.set("array", arrayToYArray(array));
+
+    expect(yArrayToArray(ymap.get("array"))).toEqual(array);
+  });
+});
