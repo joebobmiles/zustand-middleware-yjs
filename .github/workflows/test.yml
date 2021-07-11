@@ -28,12 +28,6 @@ jobs:
           # Provide a "password" to GPR so that we can pull our packages.
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/upload-artifact@v2
-        if: ${{ always() }}
-        with:
-          name: npm-error-log
-          path: /home/runner/.npm/_logs
-
       - run: npx commitlint --from HEAD~1 --to HEAD --verbose
 
   eslint:
@@ -46,7 +40,16 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 15
-          registry-url: 'https://registry.npmjs.org'
+          # We must indicate the Github Package Registry, as our config packages
+          # are there (and also NPM). Frustratingly, NPM prefers the GPR over
+          # NPM - even when we indicate that we want to pull from NPM instead of
+          # the GPR.
+          registry-url: https://npm.pkg.github.com
+
+      - run: npm ci
+        env:
+          # Provide a "password" to GPR so that we can pull our packages.
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - run: npm ci
 
@@ -62,8 +65,15 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 15
-          registry-url: 'https://registry.npmjs.org'
+          # We must indicate the Github Package Registry, as our config packages
+          # are there (and also NPM). Frustratingly, NPM prefers the GPR over
+          # NPM - even when we indicate that we want to pull from NPM instead of
+          # the GPR.
+          registry-url: https://npm.pkg.github.com
 
       - run: npm ci
+        env:
+          # Provide a "password" to GPR so that we can pull our packages.
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - run: npm run test
