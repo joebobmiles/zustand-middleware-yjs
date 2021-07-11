@@ -4,6 +4,9 @@ on:
   push:
     branches-ignore: [ master, main ]
 
+permissions:
+  packages: read
+
 jobs:
   commitlint:
     name: Lint commits
@@ -18,7 +21,7 @@ jobs:
         with:
           node-version: 15
 
-      - run: npm ci --registry https://registry.npmjs.org
+      - run: npm ci
 
       - uses: actions/upload-artifact@v2
         if: ${{ always() }}
