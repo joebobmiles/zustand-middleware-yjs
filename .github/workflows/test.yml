@@ -4,9 +4,6 @@ on:
   push:
     branches-ignore: [ master, main ]
 
-permissions:
-  packages: read
-
 jobs:
   commitlint:
     name: Lint commits
