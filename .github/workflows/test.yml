@@ -19,13 +19,13 @@ jobs:
           node-version: 15
           registry-url: 'https://registry.npmjs.org'
 
+      - run: npm ci
+
       - uses: actions/upload-artifact@v2
         if: ${{ always() }}
         with:
           name: npm-error-log
           path: /home/runner/.npm/_logs
-
-      - run: npm ci
 
       - run: npx commitlint --from HEAD~1 --to HEAD --verbose
 
