@@ -17,8 +17,11 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 15
+          registry: https://npm.pkg.github.com
 
       - run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/upload-artifact@v2
         if: ${{ always() }}
