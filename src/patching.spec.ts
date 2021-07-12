@@ -475,4 +475,53 @@ describe("patchStore", () =>
 
     expect((store.getState().foo[1] as number[])[1]).toBe(3);
   });
+
+  it("Applies additions to objects nested in arrays.", () =>
+  {
+    const store = create(() =>
+      ({
+        "foo": [ { "bar": 1, } ],
+      }));
+
+    const update = {
+      "foo": [ { "bar": 1, "baz": 2, } ],
+    };
+
+    patchStore(store, update);
+
+    expect(((store.getState().foo[0] as unknown) as { "baz": number }).baz)
+      .toBe(2);
+  });
+
+  it("Applies updates to objects nested in arrays.", () =>
+  {
+    const store = create(() =>
+      ({
+        "foo": [ { "bar": 1, "baz": 1, } ],
+      }));
+
+    const update = {
+      "foo": [ { "bar": 1, "baz": 2, } ],
+    };
+
+    patchStore(store, update);
+
+    expect(store.getState().foo[0].baz).toBe(2);
+  });
+
+  it("Applies deletions to objects nested in arrays.", () =>
+  {
+    const store = create(() =>
+      ({
+        "foo": [ { "bar": 1, "baz": 1, } ],
+      }));
+
+    const update = {
+      "foo": [ { "bar": 1, } ],
+    };
+
+    patchStore(store, update);
+
+    expect(store.getState().foo[0].baz).toBeUndefined();
+  });
 });
