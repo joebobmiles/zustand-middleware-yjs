@@ -121,6 +121,13 @@ describe("patchSharedType", () =>
     ydoc.destroy();
   });
 
+  it("Applies additions to empty map.", () =>
+  {
+    patchSharedType(ymap, { "foo": 1, });
+
+    expect(ymap.get("foo")).toBe(1);
+  });
+
   it("Applies additions to maps.", () =>
   {
     ymap.set("state", objectToYMap({ }));
