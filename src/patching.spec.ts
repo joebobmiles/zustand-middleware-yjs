@@ -379,4 +379,52 @@ describe("patchStore", () =>
 
     expect(store.getState().foo.bar).toBeUndefined();
   });
+
+  it("Applies additions to arrays.", () =>
+  {
+    const store = create(() =>
+      ({
+        "foo": [ ],
+      }));
+
+    const update = {
+      "foo": [ 1 ],
+    };
+
+    patchStore(store, update);
+
+    expect(store.getState().foo[0]).toBe(1);
+  });
+
+  it("Applies deletions to arrays.", () =>
+  {
+    const store = create(() =>
+      ({
+        "foo": [ 1 ],
+      }));
+
+    const update = {
+      "foo": [ ],
+    };
+
+    patchStore(store, update);
+
+    expect(store.getState().foo[0]).toBeUndefined();
+  });
+
+  it("Combines additions and deletions as updates to arrays.", () =>
+  {
+    const store = create(() =>
+      ({
+        "foo": [ 1, 3, 3 ],
+      }));
+
+    const update = {
+      "foo": [ 1, 2, 3 ],
+    };
+
+    patchStore(store, update);
+
+    expect(store.getState().foo[1]).toBe(2);
+  });
 });
