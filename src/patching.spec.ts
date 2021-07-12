@@ -427,4 +427,52 @@ describe("patchStore", () =>
 
     expect(store.getState().foo[1]).toBe(2);
   });
+
+  it("Applies additions to nested arrays.", () =>
+  {
+    const store = create(() =>
+      ({
+        "foo": [ 1, [ 2 ] ],
+      }));
+
+    const update = {
+      "foo": [ 1, [ 2, 3 ] ],
+    };
+
+    patchStore(store, update);
+
+    expect((store.getState().foo[1] as number[])[1]).toBe(3);
+  });
+
+  it("Applies deletions to nested arrays.", () =>
+  {
+    const store = create(() =>
+      ({
+        "foo": [ 1, [ 2, 3 ] ],
+      }));
+
+    const update = {
+      "foo": [ 1, [ 2 ] ],
+    };
+
+    patchStore(store, update);
+
+    expect((store.getState().foo[1] as number[])[1]).toBeUndefined();
+  });
+
+  it("Combines additions and deletions as updates to nested arrays.", () =>
+  {
+    const store = create(() =>
+      ({
+        "foo": [ 1, [ 2, 4 ] ],
+      }));
+
+    const update = {
+      "foo": [ 1, [ 2, 3 ] ],
+    };
+
+    patchStore(store, update);
+
+    expect((store.getState().foo[1] as number[])[1]).toBe(3);
+  });
 });
