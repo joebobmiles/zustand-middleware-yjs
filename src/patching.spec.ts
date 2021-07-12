@@ -2,7 +2,6 @@ import * as Y from "yjs";
 import create from "zustand/vanilla";
 import { arrayToYArray, objectToYMap, } from "./mapping";
 import {
-  Change,
   getChangeList,
   patchSharedType,
   patchStore,
@@ -86,13 +85,24 @@ describe("getChangeList", () =>
     }
   );
 
-  it("Should create a 'none' change when there are no changes.", () =>
-  {
-    const a = { "foo": 1, "bar": 2, };
-    const b = { "foo": 1, "bar": 3, };
-
-    expect(getChangeList(a, b)).toContainEqual<Change>([ "none", "foo", 1 ]);
-  });
+  it.each([
+    [
+      { "foo": 1, "bar": 2, },
+      { "foo": 1, "bar": 3, },
+      [ "none", "foo", 1 ]
+    ],
+    [
+      [ 1, 3 ],
+      [ 1, 2 ],
+      [ "none", 0, 1 ]
+    ]
+  ])(
+    "Should create a 'none' change when a field does not change.",
+    (a, b, change) =>
+    {
+      expect(getChangeList(a, b)).toContainEqual(change);
+    }
+  );
 });
 
 describe("patchSharedType", () =>

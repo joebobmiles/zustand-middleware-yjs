@@ -39,7 +39,9 @@ export const getChangeList = (a: any, b: any): Change[] =>
         changes.push([ "pending", index + offset, undefined ]);
         break;
 
+      case " ":
       default:
+        changes.push([ "none", index + offset, value ]);
         break;
       }
     });
