@@ -166,7 +166,7 @@ export const patchStore = <S extends State>(
   {
     const changes = getChangeList(oldState, newState);
 
-    return changes.reduce(
+    const p: any = changes.reduce(
       (state, [ type, property, value ]) =>
       {
         switch (type)
@@ -199,6 +199,19 @@ export const patchStore = <S extends State>(
       },
       {}
     );
+
+    return {
+      ...Object.entries(oldState).reduce(
+        (o, [ property, value ]) =>
+          (
+            value instanceof Function
+              ? { ...o, [property]: value, }
+              : o
+          ),
+        {}
+      ),
+      ...p,
+    };
   };
 
   store.setState(

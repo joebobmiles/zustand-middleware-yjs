@@ -524,4 +524,50 @@ describe("patchStore", () =>
 
     expect(store.getState().foo[0].baz).toBeUndefined();
   });
+
+  it("Preserves functions contained in the store.", () =>
+  {
+    type State =
+    {
+      "count": number,
+      "increment": () => void,
+
+      "room": {
+        "users": string[],
+        "join": (user: string) => void,
+      },
+    };
+
+    const store = create<State>((set) =>
+      ({
+        "count": 1,
+        "increment": () =>
+          set((state) =>
+            ({ ...state, "count": state.count + 1, })),
+        "room": {
+          "users": [],
+          "join": (user) =>
+            set((state) =>
+              ({
+                ...state,
+                "room": {
+                  ...state.room,
+                  "users": [ ...state.room.users, user ],
+                },
+              })),
+        },
+      }));
+
+    const update = {
+      "count": 3,
+      "room": {
+        "users": [],
+      },
+    };
+
+    patchStore(store, update);
+
+    expect(store.getState().increment).not.toBeUndefined();
+    expect(store.getState().room.join).not.toBeUndefined();
+  });
 });
