@@ -144,6 +144,22 @@ describe("patchSharedType", () =>
     expect(ymap.get("state").get("foo")).toBe(2);
   });
 
+  it("Creates a map when value is updated from scalar to object.", () =>
+  {
+    ymap.set("state", objectToYMap({ "foo": 1, }));
+    patchSharedType(ymap.get("state"), { "foo": { "bar": 2, }, });
+
+    expect((ymap.get("state").get("foo") as Y.Map<any>).get("bar")).toBe(2);
+  });
+
+  it("Creates an array when value is updated from scalar to array.", () =>
+  {
+    ymap.set("state", objectToYMap({ "foo": 1, }));
+    patchSharedType(ymap.get("state"), { "foo": [ 1, 2 ], });
+
+    expect((ymap.get("state").get("foo") as Y.Array<any>).get(0)).toEqual(1);
+  });
+
   it("Applies deletes to maps.", () =>
   {
     ymap.set("state", objectToYMap({ "foo": 1, }));

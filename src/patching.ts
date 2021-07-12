@@ -100,7 +100,16 @@ export const patchSharedType = (
       if ((value instanceof Function) === false)
       {
         if (sharedType instanceof Y.Map)
-          sharedType.set(property as string, value);
+        {
+          if (value instanceof Array)
+            sharedType.set(property as string, arrayToYArray(value));
+
+          else if (value instanceof Object)
+            sharedType.set(property as string, objectToYMap(value));
+
+          else
+            sharedType.set(property as string, value);
+        }
 
         else if (sharedType instanceof Y.Array)
         {
