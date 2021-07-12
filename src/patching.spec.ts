@@ -182,4 +182,22 @@ describe("patchSharedType", () =>
       .get(1)
       .get(0)).toBe(2);
   });
+
+  it("Applies deletions to arrays nested in arrays.", () =>
+  {
+    ymap.set("array", arrayToYArray([ 1, [ 2, 3 ] ]));
+    patchSharedType(ymap.get("array"), [ 1, [ 2 ] ]);
+
+    expect(ymap.get("array").get(1)).toHaveLength(1);
+  });
+
+  it("Applies additions and deletions into updates for nested arrays.", () =>
+  {
+    ymap.set("array", arrayToYArray([ 1, [ 2, 3 ] ]));
+    patchSharedType(ymap.get("array"), [ 1, [ 2, 4 ] ]);
+
+    expect(ymap.get("array")
+      .get(1)
+      .get(1)).toBe(4);
+  });
 });
