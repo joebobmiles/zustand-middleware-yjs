@@ -345,4 +345,38 @@ describe("patchStore", () =>
 
     expect((store.getState().foo as { "bar": number, }).bar).toBe(1);
   });
+
+  it("Applies updates to nested objects.", () =>
+  {
+    const store = create(() =>
+      ({
+        "foo": { "bar": 2, },
+      }));
+
+    const update = {
+      "foo": {
+        "bar": 3,
+      },
+    };
+
+    patchStore(store, update);
+
+    expect(store.getState().foo.bar).toBe(3);
+  });
+
+  it("Applies deletions to nested objects.", () =>
+  {
+    const store = create(() =>
+      ({
+        "foo": { "bar": 2, },
+      }));
+
+    const update = {
+      "foo": { },
+    };
+
+    patchStore(store, update);
+
+    expect(store.getState().foo.bar).toBeUndefined();
+  });
 });
