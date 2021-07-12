@@ -621,4 +621,35 @@ describe("patchStore", () =>
     expect(store.getState().increment).not.toBeUndefined();
     expect(store.getState().room.join).not.toBeUndefined();
   });
+
+  it("Does not drop nested data.", () =>
+  {
+    type State =
+    {
+      "owner": {
+        "person": {
+          "age": number,
+          "name": string,
+        },
+      },
+    };
+
+    const store = create<State>(() =>
+      ({
+        "owner": {
+          "person": {
+            "age": 0,
+            "name": "Joe",
+          },
+        },
+      }));
+
+    patchStore(
+      store,
+      { "owner": { "person": { "age": 1, "name": "Joe", }, }, }
+    );
+
+    expect(store.getState())
+      .toEqual({ "owner": { "person": { "age": 1, "name": "Joe", }, }, });
+  });
 });

@@ -6,7 +6,7 @@ import {
   StoreApi,
 } from "zustand/vanilla";
 import * as Y from "yjs";
-import { patchSharedType, } from "./patching";
+import { patchSharedType, patchStore, } from "./patching";
 
 /**
  * This function is the middleware the sets up the Zustand store to mirror state
@@ -27,48 +27,40 @@ export const yjs = <S extends State>(
   const map: Y.Map<any> = doc.getMap(name);
 
   // Augment the store.
-  return (_set: SetState<S>, _get: GetState<S>, _api: StoreApi<S>): S =>
+  return (set: SetState<S>, get: GetState<S>, api: StoreApi<S>): S =>
   {
-    // The new set function.
-    const set: SetState<S> = (partial, replace) =>
-    {
-      _set(partial, replace);
-
-      doc.transact(() =>
-        patchSharedType(map, _get()));
-    };
-
-    // The new get function.
-    const get: GetState<S> = () =>
-      _get();
-
     /*
      * Capture the initial state so that we can initialize the Yjs store to the
      * same values as the initial values of the Zustand store.
      */
     const initialState = config(
-      set,
+      (partial, replace) =>
+      {
+        set(partial, replace);
+        patchSharedType(map, get());
+      },
       get,
       {
-        ..._api,
-        "setState": set,
-        "getState": get,
+        ...api,
+        "setState": (partial, replace) =>
+        {
+          api.setState(partial, replace);
+          patchSharedType(map, get());
+        },
       }
     );
 
     // Initialize the Yjs store.
-    doc.transact(() =>
-      patchSharedType(map, initialState));
+    patchSharedType(map, initialState);
 
     /*
      * Whenever the Yjs store changes, we perform a set operation on the local
      * Zustand store. We avoid using the Yjs enabled set to prevent unnecessary
      * ping-pong of updates.
      */
-    map.observeDeep((events) =>
+    map.observeDeep(() =>
     {
-      console.log(events.map((event) =>
-        event.target.toJSON()));
+      patchStore(api, map.toJSON());
     });
 
     // Return the initial state to create or the next middleware.
