@@ -1,7 +1,12 @@
 import * as Y from "yjs";
 import create from "zustand/vanilla";
 import { arrayToYArray, objectToYMap, } from "./mapping";
-import { getChangeList, patchSharedType, patchStore, } from "./patching";
+import {
+  Change,
+  getChangeList,
+  patchSharedType,
+  patchStore,
+} from "./patching";
 
 describe("getChangeList", () =>
 {
@@ -28,7 +33,7 @@ describe("getChangeList", () =>
     "Should create an add entry when b contains a new item. (#%#)",
     (a, b, change) =>
     {
-      expect(getChangeList(a, b)).toEqual([ change ]);
+      expect(getChangeList(a, b)).toContainEqual(change);
     }
   );
 
@@ -40,8 +45,11 @@ describe("getChangeList", () =>
 
   it("Should create an add and delete entry when an array changes.", () =>
   {
-    expect(getChangeList( [ 1 ], [ 2 ]))
-      .toEqual([ [ "delete", 0, undefined ], [ "add", 0, 2 ] ]);
+    expect(getChangeList([ 1 ], [ 2 ]))
+      .toContainEqual([ "delete", 0, undefined ]);
+
+    expect(getChangeList([ 1 ], [ 2 ]))
+      .toContainEqual([ "add", 0, 2 ]);
   });
 
   it(
@@ -49,7 +57,7 @@ describe("getChangeList", () =>
     () =>
     {
       expect(getChangeList({ "foo": 1, }, {}))
-        .toEqual([ [ "delete", "foo", undefined ] ]);
+        .toContainEqual([ "delete", "foo", undefined ]);
     }
   );
 
@@ -74,9 +82,17 @@ describe("getChangeList", () =>
     (a, b, change) =>
     {
       expect(getChangeList(a, b))
-        .toEqual([ change ]);
+        .toContainEqual(change);
     }
   );
+
+  it("Should create a 'none' change when there are no changes.", () =>
+  {
+    const a = { "foo": 1, "bar": 2, };
+    const b = { "foo": 1, "bar": 3, };
+
+    expect(getChangeList(a, b)).toContainEqual<Change>([ "none", "foo", 1 ]);
+  });
 });
 
 describe("patchSharedType", () =>
@@ -300,5 +316,23 @@ describe("patchStore", () =>
     patchStore(store, update);
 
     expect(store.getState().foo).toBeUndefined();
+  });
+
+  it("Applies additions to nested objects.", () =>
+  {
+    const store = create(() =>
+      ({
+        "foo": { },
+      }));
+
+    const update = {
+      "foo": {
+        "bar": 1,
+      },
+    };
+
+    patchStore(store, update);
+
+    expect((store.getState().foo as { "bar": number, }).bar).toBe(1);
   });
 });

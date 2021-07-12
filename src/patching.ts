@@ -4,7 +4,7 @@ import { arrayToYArray, objectToYMap, } from "./mapping";
 import { State, StoreApi, } from "zustand/vanilla";
 
 export type Change = [
-  "add" | "update" | "delete" | "pending",
+  "add" | "update" | "delete" | "pending" | "none",
   string | number,
   any
 ];
@@ -46,20 +46,24 @@ export const getChangeList = (a: any, b: any): Change[] =>
   }
   else if (delta instanceof Object)
   {
-    (Object.entries(delta) as [ string, any ]).forEach(([ property, value ]) =>
-    {
-      if (property.match(/__added$/))
-        changes.push([ "add", property.replace(/__added$/, ""), value ]);
+    (Object.entries({ ...a, ...delta, }) as [ string, any ])
+      .forEach(([ property, value ]) =>
+      {
+        if (property.match(/__added$/))
+          changes.push([ "add", property.replace(/__added$/, ""), value ]);
 
-      else if (property.match(/__deleted$/))
-        changes.push([ "delete", property.replace(/__deleted$/, ""), undefined ]);
+        else if (property.match(/__deleted$/))
+          changes.push([ "delete", property.replace(/__deleted$/, ""), undefined ]);
 
-      else if (value.__old !== undefined && value.__new !== undefined)
-        changes.push([ "update", property, value.__new ]);
+        else if (value.__old !== undefined && value.__new !== undefined)
+          changes.push([ "update", property, value.__new ]);
 
-      else if (value instanceof Object)
-        changes.push([ "pending", property, undefined ]);
-    });
+        else if (value instanceof Object)
+          changes.push([ "pending", property, undefined ]);
+
+        else
+          changes.push([ "none", property, value ]);
+      });
   }
 
   return changes;
@@ -144,30 +148,49 @@ export const patchStore = <S extends State>(
   newState: any
 ): void =>
 {
-  const changes = getChangeList(store.getState(), newState);
-
-  changes.forEach(([ type, property, value ]) =>
+  const patch = (oldState: any, newState: any): any =>
   {
-    switch (type)
-    {
-    case "add":
-    case "update":
-      {
-        store.setState((state) =>
-          ({
-            ...state,
-            [property]: value,
-          }));
-      } break;
+    const changes = getChangeList(oldState, newState);
 
-    case "delete":
+    changes.forEach(([ type, property, value ]) =>
+    {
+      switch (type)
       {
-        store.setState((state) =>
+      case "add":
+      case "update":
         {
-          delete (state as any)[property as string];
-          return state;
-        });
-      } break;
-    }
-  });
+          store.setState((state) =>
+            ({
+              ...state,
+              [property]: value,
+            }));
+        } break;
+
+      case "delete":
+        {
+          store.setState((state) =>
+          {
+            delete (state as any)[property as string];
+            return state;
+          });
+        } break;
+
+      case "pending":
+        {
+          store.setState((state) =>
+            ({
+              ...state,
+              [property]: patch(
+                (store.getState() as any)[property as string],
+                newState[property as string]
+              ),
+            }));
+        } break;
+
+      default:
+      }
+    });
+  };
+
+  patch(store.getState(), newState);
 };
