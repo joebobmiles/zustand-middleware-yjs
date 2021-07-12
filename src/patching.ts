@@ -8,6 +8,7 @@ export type Change = [
   any
 ];
 
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export const getChangeList = (a: any, b: any): Change[] =>
 {
   const delta = diff(a, b);
@@ -65,6 +66,7 @@ export const getChangeList = (a: any, b: any): Change[] =>
 
 export const patchSharedType = (
   sharedType: Y.Map<any> | Y.Array<any>,
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   update: any
 ): any =>
 {
