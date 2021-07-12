@@ -226,4 +226,35 @@ describe("patchSharedType", () =>
 
     expect(ymap.get("map").get("foo")).toHaveLength(2);
   });
+
+  it("Applies additions to objects nested in arrays.", () =>
+  {
+    ymap.set("array", arrayToYArray([ { "foo": 1, } ]));
+    patchSharedType(ymap.get("array"), [ { "foo": 1, "bar": 2, } ]);
+
+    expect(ymap.get("array").get(0)
+      .get("bar")).toBe(2);
+  });
+
+  it("Applies updates to objects nested in arrays.", () =>
+  {
+    ymap.set("array", arrayToYArray([ { "foo": { "bar": 1, }, } ]));
+    patchSharedType(ymap.get("array"), [ { "foo": { "bar": 2, }, } ]);
+
+    expect(ymap.get("array")
+      .get(0)
+      .get("foo")
+      .get("bar")).toBe(2);
+  });
+
+  it("Applies deletions to objects nested in arrays.", () =>
+  {
+    ymap.set("array", arrayToYArray([ { "foo": { "bar": 1, "baz": 2, }, } ]));
+    patchSharedType(ymap.get("array"), [ { "foo": { "bar": 1, }, } ]);
+
+    expect(ymap.get("array")
+      .get(0)
+      .get("foo")
+      .get("baz")).toBeUndefined();
+  });
 });

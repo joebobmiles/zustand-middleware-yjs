@@ -1,6 +1,6 @@
 import * as Y from "yjs";
 import { diff, } from "json-diff";
-import { arrayToYArray, } from "./mapping";
+import { arrayToYArray, objectToYMap, } from "./mapping";
 
 export type Change = [
   "add" | "update" | "delete" | "pending",
@@ -98,7 +98,14 @@ export const patchSharedType = (
             ...right
           ]);
         }
-
+        else if (value instanceof Object)
+        {
+          sharedType.insert(0, [
+            ...left,
+            objectToYMap(value),
+            ...right
+          ]);
+        }
         else
           sharedType.insert(0, [ ...left, value, ...right ]);
       }
