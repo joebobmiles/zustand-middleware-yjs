@@ -200,4 +200,30 @@ describe("patchSharedType", () =>
       .get(1)
       .get(1)).toBe(4);
   });
+
+  it("Applies additions to arrays nested in objects.", () =>
+  {
+    ymap.set("map", objectToYMap({ "foo": [ 1, 2 ], }));
+    patchSharedType(ymap.get("map"), { "foo": [ 1, 2, 3 ], });
+
+    expect(ymap.get("map").get("foo")
+      .get(2)).toBe(3);
+  });
+
+  it("Applies updates to arrays nested in objects.", () =>
+  {
+    ymap.set("map", objectToYMap({ "foo": [ 1, 2, 3 ], }));
+    patchSharedType(ymap.get("map"), { "foo": [ 1, 4, 3 ], });
+
+    expect(ymap.get("map").get("foo")
+      .get(1)).toBe(4);
+  });
+
+  it("Applies deletions to arrays nested in objects.", () =>
+  {
+    ymap.set("map", objectToYMap({ "foo": [ 1, 2, 3 ], }));
+    patchSharedType(ymap.get("map"), { "foo": [ 1, 2 ], });
+
+    expect(ymap.get("map").get("foo")).toHaveLength(2);
+  });
 });
