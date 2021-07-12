@@ -1,6 +1,7 @@
 import * as Y from "yjs";
+import create from "zustand/vanilla";
 import { arrayToYArray, objectToYMap, } from "./mapping";
-import { getChangeList, patchSharedType, } from "./patching";
+import { getChangeList, patchSharedType, patchStore, } from "./patching";
 
 describe("getChangeList", () =>
 {
@@ -256,5 +257,48 @@ describe("patchSharedType", () =>
       .get(0)
       .get("foo")
       .get("baz")).toBeUndefined();
+  });
+});
+
+describe("patchStore", () =>
+{
+  it("Applies additions to objects.", () =>
+  {
+    const store = create(() =>
+      ({ }));
+
+    const update = { "foo": 2, };
+
+    patchStore(store, update);
+
+    expect((store.getState() as { "foo": number, }).foo).toBe(2);
+  });
+
+  it("Applies updates to objects.", () =>
+  {
+    const store = create(() =>
+      ({
+        "foo": 1,
+      }));
+
+    const update = { "foo": 2, };
+
+    patchStore(store, update);
+
+    expect(store.getState().foo).toBe(2);
+  });
+
+  it("Applies deletions to objects.", () =>
+  {
+    const store = create(() =>
+      ({
+        "foo": 1,
+      }));
+
+    const update = { };
+
+    patchStore(store, update);
+
+    expect(store.getState().foo).toBeUndefined();
   });
 });

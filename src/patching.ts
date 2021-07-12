@@ -1,6 +1,7 @@
 import * as Y from "yjs";
 import { diff, } from "json-diff";
 import { arrayToYArray, objectToYMap, } from "./mapping";
+import { State, StoreApi, } from "zustand/vanilla";
 
 export type Change = [
   "add" | "update" | "delete" | "pending",
@@ -67,10 +68,10 @@ export const getChangeList = (a: any, b: any): Change[] =>
 export const patchSharedType = (
   sharedType: Y.Map<any> | Y.Array<any>,
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  update: any
-): any =>
+  newState: any
+): void =>
 {
-  const changes = getChangeList(sharedType.toJSON(), update);
+  const changes = getChangeList(sharedType.toJSON(), newState);
 
   changes.forEach(([ type, property, value ]) =>
   {
@@ -126,13 +127,47 @@ export const patchSharedType = (
       {
         patchSharedType(
           sharedType.get(property as string),
-          update[property as string]
+          newState[property as string]
         );
       }
       break;
 
     default:
       break;
+    }
+  });
+};
+
+export const patchStore = <S extends State>(
+  store: StoreApi<S>,
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  newState: any
+): void =>
+{
+  const changes = getChangeList(store.getState(), newState);
+
+  changes.forEach(([ type, property, value ]) =>
+  {
+    switch (type)
+    {
+    case "add":
+    case "update":
+      {
+        store.setState((state) =>
+          ({
+            ...state,
+            [property]: value,
+          }));
+      } break;
+
+    case "delete":
+      {
+        store.setState((state) =>
+        {
+          delete (state as any)[property as string];
+          return state;
+        });
+      } break;
     }
   });
 };
