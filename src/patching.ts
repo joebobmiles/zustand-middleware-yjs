@@ -97,38 +97,40 @@ export const patchSharedType = (
     {
     case "add":
     case "update":
-      if (sharedType instanceof Y.Map)
-        sharedType.set(property as string, value);
-
-      else if (sharedType instanceof Y.Array)
+      if ((value instanceof Function) === false)
       {
-        const index = property as number;
+        if (sharedType instanceof Y.Map)
+          sharedType.set(property as string, value);
 
-        const left = sharedType.slice(0, index);
-        const right = sharedType.slice(index+1);
-
-        sharedType.delete(0, sharedType.length);
-
-        if (value instanceof Array)
+        else if (sharedType instanceof Y.Array)
         {
-          sharedType.insert(0, [
-            ...left,
-            arrayToYArray(value),
-            ...right
-          ]);
+          const index = property as number;
+
+          const left = sharedType.slice(0, index);
+          const right = sharedType.slice(index+1);
+
+          sharedType.delete(0, sharedType.length);
+
+          if (value instanceof Array)
+          {
+            sharedType.insert(0, [
+              ...left,
+              arrayToYArray(value),
+              ...right
+            ]);
+          }
+          else if (value instanceof Object)
+          {
+            sharedType.insert(0, [
+              ...left,
+              objectToYMap(value),
+              ...right
+            ]);
+          }
+          else
+            sharedType.insert(0, [ ...left, value, ...right ]);
         }
-        else if (value instanceof Object)
-        {
-          sharedType.insert(0, [
-            ...left,
-            objectToYMap(value),
-            ...right
-          ]);
-        }
-        else
-          sharedType.insert(0, [ ...left, value, ...right ]);
       }
-
       break;
 
     case "delete":

@@ -284,6 +284,34 @@ describe("patchSharedType", () =>
       .get("foo")
       .get("baz")).toBeUndefined();
   });
+
+  it("Ignores when functions are added.", () =>
+  {
+    ymap.set("state", objectToYMap({ }));
+    patchSharedType(
+      ymap.get("state"),
+      {
+        "foo": () =>
+          null,
+      }
+    );
+
+    expect(ymap.get("state").get("foo")).toBeUndefined();
+  });
+
+  it("Ignores when values are set to functions.", () =>
+  {
+    ymap.set("state", objectToYMap({ "foo": 1, }));
+    patchSharedType(
+      ymap.get("state"),
+      {
+        "foo": () =>
+          null,
+      }
+    );
+
+    expect(ymap.get("state").get("foo")).toBe(1);
+  });
 });
 
 describe("patchStore", () =>
