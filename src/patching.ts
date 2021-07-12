@@ -48,7 +48,19 @@ export const getChangeList = (a: any, b: any): Change[] =>
   }
   else if (delta instanceof Object)
   {
-    (Object.entries({ ...a, ...delta, }) as [ string, any ])
+    Object.entries(a).forEach(([ property, value ]) =>
+    {
+      const deltaDeletesFromA = Object.keys(delta).some((p) =>
+        p === `${property}__deleted`);
+
+      const deltaUpdatesA = Object.keys(delta).some((p) =>
+        p === property);
+
+      if (!deltaDeletesFromA && !deltaUpdatesA)
+        delta[property] = value;
+    });
+
+    (Object.entries({ ...delta, }) as [ string, any ])
       .forEach(([ property, value ]) =>
       {
         if (property.match(/__added$/))
@@ -154,45 +166,43 @@ export const patchStore = <S extends State>(
   {
     const changes = getChangeList(oldState, newState);
 
-    changes.forEach(([ type, property, value ]) =>
-    {
-      switch (type)
+    return changes.reduce(
+      (state, [ type, property, value ]) =>
       {
-      case "add":
-      case "update":
+        switch (type)
         {
-          store.setState((state) =>
-            ({
-              ...state,
-              [property]: value,
-            }));
-        } break;
-
-      case "delete":
+        case "add":
+        case "update":
+        case "none":
         {
-          store.setState((state) =>
-          {
-            delete (state as any)[property as string];
-            return state;
-          });
-        } break;
+          return {
+            ...state,
+            [property]: value,
+          };
+        }
 
-      case "pending":
+        case "pending":
         {
-          store.setState((state) =>
-            ({
-              ...state,
-              [property]: patch(
-                (store.getState() as any)[property as string],
-                newState[property as string]
-              ),
-            }));
-        } break;
+          return {
+            ...state,
+            [property]: patch(
+              oldState[property as string],
+              newState[property as string]
+            ),
+          };
+        }
 
-      default:
-      }
-    });
+        case "delete":
+        default:
+          return state;
+        }
+      },
+      {}
+    );
   };
 
-  patch(store.getState(), newState);
+  store.setState(
+    patch(store.getState(), newState),
+    true // Replace with the patched state.
+  );
 };
