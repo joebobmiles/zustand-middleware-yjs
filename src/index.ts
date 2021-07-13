@@ -6,7 +6,7 @@ import {
   StoreApi,
 } from "zustand/vanilla";
 import * as Y from "yjs";
-import { patchSharedType, patchStore, } from "./patching";
+import { patchSharedType, } from "./patching";
 
 /**
  * This function is the middleware the sets up the Zustand store to mirror state
@@ -60,7 +60,7 @@ export const yjs = <S extends State>(
      */
     map.observeDeep(() =>
     {
-      patchStore(api, map.toJSON());
+      // TODO
     });
 
     // Return the initial state to create or the next middleware.
