@@ -159,6 +159,13 @@ export const patchSharedType = (
           newState[property as string]
         );
       }
+      else if (sharedType instanceof Y.Array)
+      {
+        patchSharedType(
+          sharedType.get(property as number),
+          newState[property as number]
+        );
+      }
       break;
 
     default:
