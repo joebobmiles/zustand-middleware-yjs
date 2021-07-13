@@ -87,9 +87,6 @@
         "name": "staging",
         "channel": "latest",
         "prerelease": "rc"
-      },
-      {
-        "name": "ci/release"
       }
     ],
     "plugins": [
