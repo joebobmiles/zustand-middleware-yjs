@@ -8,6 +8,7 @@ import {
 import * as Y from "yjs";
 import { patchSharedType, patchStore, } from "./patching";
 
+
 /**
  * This function is the middleware the sets up the Zustand store to mirror state
  * into a Yjs store for peer-to-peer synchronization.
