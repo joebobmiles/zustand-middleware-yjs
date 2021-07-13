@@ -33,3 +33,4 @@ jobs:
       - run: npx semantic-release --dry-run
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
