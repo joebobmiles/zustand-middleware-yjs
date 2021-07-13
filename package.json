@@ -37,6 +37,7 @@
     "dist"
   ],
   "publishConfig": {
+    "registry": "https://registry.npmjs.org",
     "access": "public"
   },
   "scripts": {
@@ -78,5 +79,21 @@
         "./tsconfig.lint.json"
       ]
     }
+  },
+  "release": {
+    "branches": [
+      "master",
+      {
+        "name": "staging",
+        "channel": "latest",
+        "prerelease": "rc"
+      }
+    ],
+    "plugins": [
+      "semantic-release-config-gitmoji",
+      "@semantic-release/npm",
+      "@semantic-release/github",
+      "@semantic-release/git"
+    ]
   }
 }

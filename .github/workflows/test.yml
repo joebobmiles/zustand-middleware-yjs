@@ -2,7 +2,7 @@ name: Test & Lint
 
 on:
   push:
-    branches-ignore: [ master, main ]
+    branches-ignore: [ master ]
 
 jobs:
   commitlint:
@@ -26,7 +26,7 @@ jobs:
       - run: npm ci
         env:
           # Provide a "password" to GPR so that we can pull our packages.
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - run: npx commitlint --from HEAD~1 --to HEAD --verbose
 
@@ -49,7 +49,7 @@ jobs:
       - run: npm ci
         env:
           # Provide a "password" to GPR so that we can pull our packages.
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - run: npm ci
 
@@ -74,6 +74,6 @@ jobs:
       - run: npm ci
         env:
           # Provide a "password" to GPR so that we can pull our packages.
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - run: npm run test
