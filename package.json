@@ -1,6 +1,5 @@
 {
   "name": "zustand-middleware-yjs",
-  "private": "false",
   "description": "Zustand middleware for syncing state with Yjs.",
   "license": "MIT",
   "keywords": [
