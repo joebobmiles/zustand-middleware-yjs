@@ -1,7 +1,8 @@
 name: Release
 
 on:
-  push: [ master, staging, ci/release ]
+  push: 
+    branches: [ master, staging, ci/release ]
 
 jobs:
   release:
