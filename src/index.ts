@@ -29,7 +29,7 @@ import { patchSharedType, patchStore, } from "./patching";
  * @param config The initial state of the store we should be using.
  * @returns A Zustand state creator.
  */
-export const yjs = <S extends State>(
+const yjs = <S extends State>(
   doc: Y.Doc,
   name: string,
   config: StateCreator<S>
