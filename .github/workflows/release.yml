@@ -1,0 +1,32 @@
+name: Release
+
+on:
+  push: [ master, staging, ci/release ]
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 15
+          # We must indicate the Github Package Registry, as our config packages
+          # are there (and also NPM). Frustratingly, NPM prefers the GPR over
+          # NPM - even when we indicate that we want to pull from NPM instead of
+          # the GPR.
+          registry-url: https://npm.pkg.github.com
+
+      - run: npm ci
+        env:
+          # Provide a "password" to GPR so that we can pull our packages.
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: npm run build
+
+      - run: npx semantic-release --dry-run
