@@ -653,3 +653,27 @@ describe("patchStore", () =>
       .toEqual({ "owner": { "person": { "age": 1, "name": "Joe", }, }, });
   });
 });
+
+describe("Combining patchSharedType and patchStore.", () =>
+{
+  it("Does not clobber state when updating shared type.", () =>
+  {
+    const ydoc = new Y.Doc();
+    const ymap = ydoc.getMap("map");
+
+    ymap.observeDeep(() =>
+    {
+      patchStore(api, ymap.toJSON());
+    });
+
+    const api = create(() =>
+      ({
+        "count": 1,
+      }));
+
+    patchSharedType(ymap, api.getState());
+
+    expect(api.getState().count).toBe(1);
+    expect(ymap.get("count")).toBe(1);
+  });
+});
