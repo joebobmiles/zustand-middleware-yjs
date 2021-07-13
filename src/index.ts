@@ -6,167 +6,7 @@ import {
   StoreApi,
 } from "zustand/vanilla";
 import * as Y from "yjs";
-import { diff, } from "json-diff";
-
-const arrayToYarray = (array: Array<any>): Y.Array<any> =>
-{
-  const yarray = new Y.Array();
-
-  for (const value of array)
-  {
-    if (typeof value !== "function" && typeof value !== "undefined")
-    {
-      if (value instanceof Array)
-
-        yarray.push([ arrayToYarray(value) ]);
-
-      else if (value instanceof Object)
-
-        yarray.push([ stateToYmap(value) ]);
-
-      else
-
-        yarray.push([ value ]);
-
-    }
-  }
-
-  return yarray;
-};
-
-const stateToYmap = <S extends State>(state: S, ymap = new Y.Map()) =>
-{
-  for (const property in state)
-  {
-    if (typeof state[property] !== "function" && typeof state[property] !== "undefined")
-    {
-      if (state[property] instanceof Array)
-        ymap.set(property, arrayToYarray((<unknown>state[property]) as Array<any>));
-
-
-      else if (state[property] instanceof Object)
-        ymap.set(property, stateToYmap((state as any)[property]));
-
-
-      else
-        ymap.set(property, state[property]);
-
-    }
-  }
-
-  return ymap;
-};
-
-const mapZustandUpdateToYjsUpdate =
-  (stateDiff: any, sharedType: Y.Map<any> | Y.Array<any>) =>
-  {
-    const getChange = (property: string, value: any): [
-      "add" | "delete" | "update" | "none",
-      string,
-      any
-    ] =>
-    {
-      if (isNaN(parseInt(property, 10)) === false)
-      {
-        switch (value[0])
-        {
-        case "+":
-          return [ "add", property, value[1] ];
-
-        case "-":
-          return [ "delete", property, undefined ];
-
-        default:
-          return [ "none", property, value[1] ];
-        }
-      }
-      else
-      {
-        if (property.match(/__added$/))
-          return [ "add", property.replace(/__added$/, ""), value ];
-
-        else if (property.match(/__deleted$/))
-          return [ "delete", property.replace(/__deleted$/, ""), undefined ];
-
-        else if (value.__old !== undefined && value.__new !== undefined)
-          return [ "update", property, value.__new ];
-
-        else
-          return [ "none", property, value ];
-      }
-    };
-
-    for (const property in stateDiff)
-    {
-      const value = stateDiff[property];
-
-      if (typeof value !== "function" && typeof value !== "undefined")
-      {
-        const [ type, actualProperty, newValue ] = getChange(property, value);
-
-        if (typeof newValue !== "function" && typeof newValue !== "undefined")
-        {
-          switch (type)
-          {
-          case "delete":
-            // TODO
-            break;
-
-          case "add":
-          case "update":
-            {
-              if (newValue instanceof Object)
-                return;
-
-              else
-              {
-                if (sharedType instanceof Y.Map)
-                  sharedType.set(actualProperty, newValue);
-
-                else if (sharedType instanceof Y.Array)
-                {
-                  const index = parseInt(actualProperty, 10);
-
-                  const left = sharedType.slice(0, index);
-                  const right = sharedType.slice(index+1);
-
-                  sharedType.doc?.transact(() =>
-                  {
-                    sharedType.delete(0, sharedType.length);
-                    sharedType.insert(0, [ ...left, newValue, ...right ]);
-                  });
-                }
-              }
-            }
-            break;
-
-          case "none":
-          default:
-            {
-              if (newValue instanceof Object)
-              {
-                if (sharedType instanceof Y.Map)
-                {
-                  mapZustandUpdateToYjsUpdate(
-                    newValue,
-                    sharedType.get(actualProperty)
-                  );
-                }
-                else if (sharedType instanceof Y.Array)
-                {
-                  mapZustandUpdateToYjsUpdate(
-                    newValue,
-                    sharedType.get(parseInt(actualProperty, 10))
-                  );
-                }
-              }
-            }
-            break;
-          }
-        }
-      }
-    }
-  };
+import { patchSharedType, patchStore, } from "./patching";
 
 /**
  * This function is the middleware the sets up the Zustand store to mirror state
@@ -187,79 +27,40 @@ export const yjs = <S extends State>(
   const map: Y.Map<any> = doc.getMap(name);
 
   // Augment the store.
-  return (_set: SetState<S>, _get: GetState<S>, _api: StoreApi<S>): S =>
+  return (set: SetState<S>, get: GetState<S>, api: StoreApi<S>): S =>
   {
-    // The new set function.
-    const set: SetState<S> = (partial, replace) =>
-    {
-      const previousState = _get();
-      _set(partial, replace);
-      const nextState = _get();
-
-      mapZustandUpdateToYjsUpdate(diff(previousState, nextState), map);
-    };
-
-    // The new get function.
-    const get: GetState<S> = () =>
-      _get();
-
     /*
      * Capture the initial state so that we can initialize the Yjs store to the
      * same values as the initial values of the Zustand store.
      */
     const initialState = config(
-      set,
+      (partial, replace) =>
+      {
+        set(partial, replace);
+        patchSharedType(map, get());
+      },
       get,
       {
-        ..._api,
-        "setState": set,
-        "getState": get,
+        ...api,
+        "setState": (partial, replace) =>
+        {
+          api.setState(partial, replace);
+          patchSharedType(map, get());
+        },
       }
     );
 
     // Initialize the Yjs store.
-    stateToYmap(initialState, map);
+    patchSharedType(map, initialState);
 
     /*
      * Whenever the Yjs store changes, we perform a set operation on the local
      * Zustand store. We avoid using the Yjs enabled set to prevent unnecessary
      * ping-pong of updates.
      */
-    map.observe((event) =>
+    map.observeDeep(() =>
     {
-      if (event.target === map)
-      {
-        event.changes.keys.forEach((change, key) =>
-        {
-          switch (change.action)
-          {
-          case "add":
-          case "update":
-            set(() =>
-            {
-
-              const value = map.get(key);
-
-              if (value instanceof Y.Array)
-              {
-                console.log(value);
-                return <unknown>{ [key]: (value as Y.Array<any>).toJSON(), };
-              }
-
-              else if (value instanceof Y.Map)
-                return <unknown>{ [key]: (value as Y.Map<any>).toJSON(), };
-
-              else
-                return <unknown>{ [key]: value, };
-            });
-            break;
-
-          case "delete":
-          default:
-            break;
-          }
-        });
-      }
+      patchStore(api, map.toJSON());
     });
 
     // Return the initial state to create or the next middleware.
