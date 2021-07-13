@@ -652,28 +652,24 @@ describe("patchStore", () =>
     expect(store.getState())
       .toEqual({ "owner": { "person": { "age": 1, "name": "Joe", }, }, });
   });
-});
 
-describe("Combining patchSharedType and patchStore.", () =>
-{
-  it("Does not clobber state when updating shared type.", () =>
+  it("Does not truncate state if there are no changes.", () =>
   {
-    const ydoc = new Y.Doc();
-    const ymap = ydoc.getMap("map");
-
-    ymap.observeDeep(() =>
+    type State =
     {
-      patchStore(api, ymap.toJSON());
-    });
+      "count": 0,
+    };
 
-    const api = create(() =>
+    const store = create<State>(() =>
       ({
-        "count": 1,
+        "count": 0,
       }));
 
-    patchSharedType(ymap, api.getState());
+    patchStore(
+      store,
+      { "count": 0, }
+    );
 
-    expect(api.getState().count).toBe(1);
-    expect(ymap.get("count")).toBe(1);
+    expect(store.getState()).toEqual({ "count": 0, });
   });
 });

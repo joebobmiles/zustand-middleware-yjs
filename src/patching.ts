@@ -177,52 +177,58 @@ export const patchStore = <S extends State>(
   {
     const changes = getChangeList(oldState, newState);
 
-    const p: any = changes.reduce(
-      (state, [ type, property, value ]) =>
-      {
-        switch (type)
-        {
-        case "add":
-        case "update":
-        case "none":
-        {
-          return {
-            ...state,
-            [property]: value,
-          };
-        }
+    if (changes.length === 0)
+      return oldState;
 
-        case "pending":
+    else
+    {
+      const p: any = changes.reduce(
+        (state, [ type, property, value ]) =>
         {
-          return {
-            ...state,
-            [property]: patch(
-              oldState[property as string],
-              newState[property as string]
-            ),
-          };
-        }
+          switch (type)
+          {
+          case "add":
+          case "update":
+          case "none":
+          {
+            return {
+              ...state,
+              [property]: value,
+            };
+          }
 
-        case "delete":
-        default:
-          return state;
-        }
-      },
-      {}
-    );
+          case "pending":
+          {
+            return {
+              ...state,
+              [property]: patch(
+                oldState[property as string],
+                newState[property as string]
+              ),
+            };
+          }
 
-    return {
-      ...Object.entries(oldState).reduce(
-        (o, [ property, value ]) =>
-          (
-            value instanceof Function
-              ? { ...o, [property]: value, }
-              : o
-          ),
+          case "delete":
+          default:
+            return state;
+          }
+        },
         {}
-      ),
-      ...p,
-    };
+      );
+
+      return {
+        ...Object.entries(oldState).reduce(
+          (o, [ property, value ]) =>
+            (
+              value instanceof Function
+                ? { ...o, [property]: value, }
+                : o
+            ),
+          {}
+        ),
+        ...p,
+      };
+    }
   };
 
   store.setState(
