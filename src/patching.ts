@@ -3,12 +3,25 @@ import { diff, } from "json-diff";
 import { arrayToYArray, objectToYMap, } from "./mapping";
 import { State, StoreApi, } from "zustand/vanilla";
 
+/**
+ * A record that documents a change to an entry in an array or object.
+ */
 export type Change = [
   "add" | "update" | "delete" | "pending" | "none",
   string | number,
   any
 ];
 
+/**
+ * Computes a diff between a and b and creates a list of changes that transform
+ * a into b. This list of changes are only for the top level of a. Nested
+ * changes are denoted by a 'pending' entry, indicating that a change resolver
+ * will need to recurse in order to fully transform a into b.
+ *
+ * @param a The 'old' object to compare to the 'new' object.
+ * @param b The 'new' object to compare to the 'old' object.
+ * @returns A list of Changes that inform what is different between a and b.
+ */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export const getChangeList = (a: any, b: any): Change[] =>
 {
@@ -83,6 +96,15 @@ export const getChangeList = (a: any, b: any): Change[] =>
   return changes;
 };
 
+/**
+ * Diffs sharedType and newState to create a list of changes for transforming
+ * the contents of sharedType into that of newState. For every nested, 'pending'
+ * change detected, this function recurses, as a nested object or array is
+ * represented as a Y.Map or Y.Array.
+ *
+ * @param sharedType The Yjs shared type to patch.
+ * @param newState The new state to patch the shared type into.
+ */
 export const patchSharedType = (
   sharedType: Y.Map<any> | Y.Array<any>,
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -174,12 +196,29 @@ export const patchSharedType = (
   });
 };
 
+/**
+ * Diffs the current state stored in the Zustand store and the given newState.
+ * The current Zustand state is patched into the given new state recursively.
+ *
+ * @param store The Zustand API that manages the store we want to patch.
+ * @param newState The new state that the Zustand store should be patched to.
+ */
 export const patchStore = <S extends State>(
   store: StoreApi<S>,
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   newState: any
 ): void =>
 {
+  /**
+   * Patches oldState to be identical to newState. This function recurses when
+   * an array or object is encountered. If oldState and newState are already
+   * identical (indicated by an empty diff), then oldState is returned.
+   *
+   * @param oldState The state we want to patch.
+   * @param newState The state we want oldState to match after patching.
+   *
+   * @returns The patched oldState, identical to newState.
+   */
   const patch = (oldState: any, newState: any): any =>
   {
     const changes = getChangeList(oldState, newState);

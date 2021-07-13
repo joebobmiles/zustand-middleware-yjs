@@ -12,6 +12,18 @@ import { patchSharedType, patchStore, } from "./patching";
  * This function is the middleware the sets up the Zustand store to mirror state
  * into a Yjs store for peer-to-peer synchronization.
  *
+ * @example <caption>Using yjs</caption>
+ * const useState = create(
+ *   yjs(
+ *     new Y.Doc(), // A Y.Doc to back our store with.
+ *     "shared",    // A name to give the Y.Map our store is backed by.
+ *     (set) =>
+ *     ({
+ *       "count": 1,
+ *     })
+ *   )
+ * );
+ *
  * @param doc The Yjs document to create the store in.
  * @param name The name that the store should be listed under in the doc.
  * @param config The initial state of the store we should be using.
@@ -34,6 +46,10 @@ export const yjs = <S extends State>(
      * same values as the initial values of the Zustand store.
      */
     const initialState = config(
+      /*
+       * Create a new set function that defers to the original and then passes
+       * the new state to patchSharedType.
+       */
       (partial, replace) =>
       {
         set(partial, replace);
@@ -42,6 +58,7 @@ export const yjs = <S extends State>(
       get,
       {
         ...api,
+        // Create a new setState function as we did with set.
         "setState": (partial, replace) =>
         {
           api.setState(partial, replace);
