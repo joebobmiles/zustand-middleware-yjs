@@ -1,8 +1,8 @@
-import type { Config } from "@jest/types";
+import type { Config, } from "@jest/types";
 
 const config: Config.InitialOptions =
 {
-  transform: {
+  "transform": {
     ".tsx?": "ts-jest",
   },
 };
