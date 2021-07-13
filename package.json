@@ -57,6 +57,7 @@
     "@types/jest": "^26.0.24",
     "@types/json-diff": "^0.5.1",
     "commitlint-config-gitmoji": "^2.2.5",
+    "conventional-changelog-gitmoji-config": "^1.4.3",
     "eslint": "^7.30.0",
     "husky": "^7.0.1",
     "jest": "^27.0.6",
@@ -90,7 +91,7 @@
       }
     ],
     "plugins": [
-      [ 
+      [
         "@semantic-release/commit-analyzer",
         {
           "config": "conventional-changelog-gitmoji-config"
@@ -107,7 +108,9 @@
       [
         "@semantic-release/git",
         {
-          "assets": [ "package.json" ],
+          "assets": [
+            "package.json"
+          ],
           "message": ":bookmark: chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
         }
       ]
