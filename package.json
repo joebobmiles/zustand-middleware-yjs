@@ -30,7 +30,7 @@
     "email": "joe@jrm.dev",
     "url": "https://jrm.dev"
   },
-  "main": "dist/index.js",
+  "main": "dist/yjs.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
@@ -42,7 +42,7 @@
   "scripts": {
     "test": "jest",
     "test:debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
-    "build": "tsc",
+    "build": "rollup --config rollup.config.ts --configPlugin typescript",
     "prepare": "husky install"
   },
   "dependencies": {
@@ -67,6 +67,7 @@
     "semantic-release": "^17.4.4",
     "ts-jest": "^27.0.3",
     "ts-node": "^10.0.0",
+    "tslib": "^2.3.0",
     "typescript": "^4.3.5"
   },
   "commitlint": {
