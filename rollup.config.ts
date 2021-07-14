@@ -10,20 +10,13 @@ export default defineConfig({
     commonjs(),
     typescript({
       "tsconfig": "./tsconfig.json",
-      "include": "**/*.[jt]s",
+      "include": "**/*.(j|t)s",
     })
   ],
-  "output": [
-    {
-      "name": "CommonJS Bundle",
-      "file": "dist/yjs.js",
-      "format": "cjs",
-      "exports": "default",
-    },
-    {
-      "name": "ECMAScript Bundle",
-      "file": "dist/yjs.mjs",
-      "format": "es",
-    }
-  ],
+  "output":
+  {
+    "name": "yjs",
+    "file": "dist/yjs.js",
+    "format": "umd",
+  },
 });
