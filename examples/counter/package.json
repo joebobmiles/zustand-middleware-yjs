@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^19.0.0",
     "vite": "^2.4.2"
   },
   "dependencies": {
