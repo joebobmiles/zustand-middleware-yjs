@@ -77,5 +77,18 @@ describe("diff", () =>
         });
       }
     );
+
+    it("Only returns fields that have changed.", () =>
+    {
+      expect(diff(
+        { "foo": 1, "bar": 2, },
+        { "foo": 1, "bar": 3, }
+      )).toEqual({
+        "bar": {
+          "__old": 2,
+          "__new": 3,
+        },
+      });
+    });
   });
 });
