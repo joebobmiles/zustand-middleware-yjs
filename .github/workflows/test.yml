@@ -19,6 +19,8 @@ jobs:
           node-version: 15
 
       - run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - run: npx commitlint --from HEAD~1 --to HEAD --verbose
 
