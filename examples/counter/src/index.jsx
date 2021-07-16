@@ -16,7 +16,10 @@ const useStore = create(yjs(doc, "shared", (set) =>
   ({
     "count": 1,
     "increment": set((state) =>
-      state.count + 1),
+      ({
+        ...state,
+        "count": state.count + 1,
+      })),
   })));
 
 render(
