@@ -17,6 +17,6 @@ export default defineConfig({
   {
     "name": "yjs",
     "file": "dist/yjs.js",
-    "format": "umd",
+    "format": "es",
   },
 });
