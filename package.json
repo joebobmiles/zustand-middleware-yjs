@@ -102,10 +102,10 @@
           "assets": [
             "package.json"
           ],
-          "message": ":bookmark: chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+          "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
         }
       ]
     ]
   },
-  "version": "1.0.0-rc.2"
+  "version": "1.1.0-rc.1"
 }
