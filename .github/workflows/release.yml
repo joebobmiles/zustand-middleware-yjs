@@ -17,15 +17,10 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 15
-          # We must indicate the Github Package Registry, as our config packages
-          # are there (and also NPM). Frustratingly, NPM prefers the GPR over
-          # NPM - even when we indicate that we want to pull from NPM instead of
-          # the GPR.
-          registry-url: https://npm.pkg.github.com
+          registry-url: https://npm.pkg.github.com/
 
       - run: npm ci
         env:
-          # Provide a "password" to GPR so that we can pull our packages.
           NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - run: npm run build
@@ -34,3 +29,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
+        with:
+          name: npm-install-log-test
+          path: /home/runner/.npm/_logs
