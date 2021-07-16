@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import { diff, } from "json-diff";
+import { diff, } from "./diff";
 import { arrayToYArray, objectToYMap, } from "./mapping";
 import { State, StoreApi, } from "zustand/vanilla";
 

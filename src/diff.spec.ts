@@ -124,6 +124,24 @@ describe("diff", () =>
     );
 
     it(
+      "Returns [ ..., [ '-', <removed> ], [ '+', <added> ], ... ] for replaced "
+      +"values.",
+      () =>
+      {
+        expect(diff([ 1 ], [ 2 ])).toEqual([ [ "-", 1 ], [ "+", 2 ] ]);
+      }
+    );
+
+    it("Does not forget additions at the end of b.", () =>
+    {
+      expect(diff([ 1 ], [ 2, 3 ])).toEqual([
+        [ "-", 1 ],
+        [ "+", 2 ],
+        [ "+", 3 ]
+      ]);
+    });
+
+    it(
       "Returns [ ..., [ '+', <added> ] ] when a is missing a value.",
       () =>
       {

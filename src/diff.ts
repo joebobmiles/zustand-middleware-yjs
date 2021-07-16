@@ -5,6 +5,7 @@ export const diff = (a: any, b: any): any =>
   {
     if (a instanceof Array && b instanceof Array)
     {
+
       const result: any[] = [];
 
       if (a.length === b.length)
@@ -13,6 +14,8 @@ export const diff = (a: any, b: any): any =>
           diff(value, b[index]) === undefined))
           return undefined;
       }
+
+      let finalIndices = 0;
 
       a.forEach((value, index) =>
       {
@@ -32,21 +35,31 @@ export const diff = (a: any, b: any): any =>
 
           else
             result.push([ " ", value ]);
+
+          finalIndices++;
         }
 
         else if (value !== b[index] && value === b[index+1])
+        {
           result.push([ "+", b[index] ], [ " ", value ]);
+          finalIndices += 2;
+        }
+
+        else if (value !== b[index] && value !== b[index+1])
+        {
+          result.push([ "-", value ], [ "+", b[index] ]);
+          finalIndices++;
+        }
 
         else
+        {
           result.push([ " ", value ]);
+          finalIndices++;
+        }
+
       });
 
-      if (result.length < a.length)
-      {
-        a.slice(b.length).forEach((value) =>
-          result.push([ "-", value ]));
-      }
-      else if (result.length < b.length)
+      if (finalIndices < b.length)
       {
         b.slice(a.length).forEach((value) =>
           result.push([ "+", value ]));
