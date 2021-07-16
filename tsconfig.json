@@ -6,6 +6,7 @@
     "rootDir": "./src",
     "removeComments": true,
     "moduleResolution": "node",
+    "allowJs": true,
 
     "strict": true,
     "alwaysStrict": true,
@@ -18,8 +19,9 @@
   "exclude": [
     "node_modules",
     "dist",
+    "examples",
     "**/*.config.ts",
     "**/*.test.ts",
-    "**/*.spec.ts"
+    "**/*.spec.ts",
   ]
 }
