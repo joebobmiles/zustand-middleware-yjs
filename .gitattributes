@@ -1,5 +1,1 @@
-*.ts    eol=lf
-*.js    eol=lf
-*.tsx   eol=lf
-*.jsx   eol=lf
-*.json  eol=lf
+*   eol=lf
