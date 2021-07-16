@@ -17,8 +17,11 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 15
+          registry-url: https://npm.pkg.github.com/
 
       - run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - run: npm run build
 
@@ -26,3 +29,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
+        with:
+          name: npm-install-log-test
+          path: /home/runner/.npm/_logs
