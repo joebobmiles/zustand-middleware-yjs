@@ -135,4 +135,47 @@ describe("diff", () =>
       }
     );
   });
+
+  describe("When passed arrays with nested objects", () =>
+  {
+    it("Returns undefined for arrays of identical contents.", () =>
+    {
+      expect(diff([ { "foo": 1, } ], [ { "foo": 1, } ])).toBeUndefined();
+    });
+
+    it(
+      "Returns [ ..., [ '-', <removed> ], ... ] when b is missing an item.",
+      () =>
+      {
+        expect(diff([ { "foo": 1, }, { "bar": 2, } ], [ { "foo": 1, } ]))
+          .toEqual([
+            [ " ", { "foo": 1, } ],
+            [ "-", { "bar": 2, } ]
+          ]);
+      }
+    );
+
+    it(
+      "Returns [ ..., [ '+', <added> ], ... ] when a is missing an item.",
+      () =>
+      {
+        expect(diff([ { "foo": 1, } ], [ { "foo": 1, }, { "bar": 2, } ]))
+          .toEqual([
+            [ " ", { "foo": 1, } ],
+            [ "+", { "bar": 2, } ]
+          ]);
+      }
+    );
+
+    it(
+      "Returns [ ..., [ '~', <diff> ], ... ] when the item is modified.",
+      () =>
+      {
+        expect(diff([ { "foo": 1, } ], [ { "foo": 2, } ]))
+          .toEqual([
+            [ "~", { "foo": { "__old": 1, "__new": 2, }, } ]
+          ]);
+      }
+    );
+  });
 });

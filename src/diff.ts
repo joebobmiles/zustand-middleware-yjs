@@ -10,7 +10,7 @@ export const diff = (a: any, b: any): any =>
       if (a.length === b.length)
       {
         if (a.every((value, index) =>
-          value === b[index]))
+          diff(value, b[index]) === undefined))
           return undefined;
       }
 
@@ -19,11 +19,23 @@ export const diff = (a: any, b: any): any =>
         if (b[index] === undefined)
           result.push([ "-", value ]);
 
-        else if (b[index] !== value && b[index + 1] === value)
-          result.push([ "+", b[index] ], [ " ", value ]);
+        else if (value instanceof Object && b[index] instanceof Object)
+        {
+          const currentDiff = diff(value, b[index]);
+          const nextDiff = diff(value, b[index+1]);
 
-        else if (b[index] !== value)
-          result.push([ "+", b[index] ]);
+          if (currentDiff !== undefined && nextDiff === undefined)
+            result.push([ "+", b[index] ], [ " ", value ]);
+
+          else if (currentDiff !== undefined)
+            result.push([ "~", currentDiff ]);
+
+          else
+            result.push([ " ", value ]);
+        }
+
+        else if (value !== b[index] && value === b[index+1])
+          result.push([ "+", b[index] ], [ " ", value ]);
 
         else
           result.push([ " ", value ]);
