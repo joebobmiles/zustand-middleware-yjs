@@ -19,14 +19,6 @@ jobs:
           node-version: 15
 
       - run: npm ci
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - uses: actions/upload-artifact@v2
-        if: ${{ always() }}
-        with:
-          name: npm-install-log
-          path: /home/runner/.npm/_logs
 
       - run: npm run build
 
