@@ -62,7 +62,7 @@ const yjs = <S extends State>(
         "setState": (partial, replace) =>
         {
           api.setState(partial, replace);
-          patchSharedType(map, get());
+          patchSharedType(map, api.getState());
         },
       }
     );
