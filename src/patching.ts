@@ -226,7 +226,49 @@ export const patchStore = <S extends State>(
     if (changes.length === 0)
       return oldState;
 
-    else
+    else if (oldState instanceof Array)
+    {
+      const p: any = changes
+        .sort(([ , indexA ], [ , indexB ]) =>
+          Math.sign((indexA as number) - (indexB as number)))
+        .reduce(
+          (state, [ type, index, value ]) =>
+          {
+            switch (type)
+            {
+            case "add":
+            case "update":
+            case "none":
+            {
+              return [
+                ...state,
+                value
+              ];
+            }
+
+            case "pending":
+            {
+              return [
+                ...state,
+                patch(
+                  oldState[index as number],
+                  newState[index as number]
+                )
+              ];
+            }
+
+            case "delete":
+            default:
+              return state;
+            }
+          },
+          [] as any[]
+        );
+
+      return p;
+    }
+
+    else if (oldState instanceof Object)
     {
       const p: any = changes.reduce(
         (state, [ type, property, value ]) =>
