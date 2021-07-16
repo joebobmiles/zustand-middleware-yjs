@@ -46,26 +46,23 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "json-diff": "^0.5.4",
     "yjs": "^13.5.11",
     "zustand": "^3.5.5"
   },
   "devDependencies": {
     "@commitlint/cli": "^12.1.4",
+    "@commitlint/config-conventional": "^12.1.4",
     "@joebobmiles/eslint-config-typescript": "^1.3.0",
     "@rollup/plugin-commonjs": "^19.0.0",
     "@rollup/plugin-node-resolve": "^13.0.0",
     "@rollup/plugin-typescript": "^8.2.1",
+    "@semantic-release/git": "^9.0.0",
     "@types/jest": "^26.0.24",
-    "@types/json-diff": "^0.5.1",
-    "commitlint-config-gitmoji": "^2.2.5",
-    "conventional-changelog-gitmoji-config": "^1.4.3",
     "eslint": "^7.30.0",
     "husky": "^7.0.1",
     "jest": "^27.0.6",
     "rollup": "^2.53.1",
     "semantic-release": "^17.4.4",
-    "semantic-release-config-gitmoji": "^1.2.4",
     "ts-jest": "^27.0.3",
     "ts-node": "^10.0.0",
     "tslib": "^2.3.0",
@@ -73,7 +70,7 @@
   },
   "commitlint": {
     "extends": [
-      "gitmoji"
+      "@commitlint/config-conventional"
     ]
   },
   "eslintConfig": {
@@ -95,18 +92,8 @@
       }
     ],
     "plugins": [
-      [
-        "@semantic-release/commit-analyzer",
-        {
-          "config": "conventional-changelog-gitmoji-config"
-        }
-      ],
-      [
-        "@semantic-release/release-notes-generator",
-        {
-          "config": "conventional-changelog-gitmoji-config"
-        }
-      ],
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
       "@semantic-release/npm",
       "@semantic-release/github",
       [
@@ -115,10 +102,10 @@
           "assets": [
             "package.json"
           ],
-          "message": ":bookmark: chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+          "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
         }
       ]
     ]
   },
-  "version": "1.0.0"
+  "version": "1.1.0-rc.1"
 }

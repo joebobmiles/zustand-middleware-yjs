@@ -17,18 +17,19 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 15
-          # We must indicate the Github Package Registry, as our config packages
-          # are there (and also NPM). Frustratingly, NPM prefers the GPR over
-          # NPM - even when we indicate that we want to pull from NPM instead of
-          # the GPR.
-          registry-url: https://npm.pkg.github.com
+          registry-url: https://npm.pkg.github.com/
 
       - run: npm ci
         env:
-          # Provide a "password" to GPR so that we can pull our packages.
           NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - run: npx commitlint --from HEAD~1 --to HEAD --verbose
+
+      - uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
+        with:
+          name: npm-install-log-commitlint
+          path: /home/runner/.npm/_logs
 
   eslint:
     name: Lint code
@@ -40,20 +41,19 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 15
-          # We must indicate the Github Package Registry, as our config packages
-          # are there (and also NPM). Frustratingly, NPM prefers the GPR over
-          # NPM - even when we indicate that we want to pull from NPM instead of
-          # the GPR.
-          registry-url: https://npm.pkg.github.com
+          registry-url: https://npm.pkg.github.com/
 
       - run: npm ci
         env:
-          # Provide a "password" to GPR so that we can pull our packages.
           NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      - run: npm ci
-
       - run: npx eslint .
+
+      - uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
+        with:
+          name: npm-install-log-eslint
+          path: /home/runner/.npm/_logs
 
   test:
     name: Run tests
@@ -65,15 +65,16 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 15
-          # We must indicate the Github Package Registry, as our config packages
-          # are there (and also NPM). Frustratingly, NPM prefers the GPR over
-          # NPM - even when we indicate that we want to pull from NPM instead of
-          # the GPR.
-          registry-url: https://npm.pkg.github.com
+          registry-url: https://npm.pkg.github.com/
 
       - run: npm ci
         env:
-          # Provide a "password" to GPR so that we can pull our packages.
           NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - run: npm run test
+
+      - uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
+        with:
+          name: npm-install-log-test
+          path: /home/runner/.npm/_logs
