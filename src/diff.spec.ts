@@ -91,4 +91,48 @@ describe("diff", () =>
       });
     });
   });
+
+  describe("When passed arrays of scalar values", () =>
+  {
+    it("Returns undefined for arrays with identical contents.", () =>
+    {
+      expect(diff([ 1, 2, 3 ], [ 1, 2, 3 ])).toBeUndefined();
+    });
+
+    it(
+      "Returns [ ..., [ '-', <removed> ], ... ] when b is missing a value.",
+      () =>
+      {
+        expect(diff([ 1, 2, 3 ], [ 1, 2 ])).toEqual([
+          [ " ", 1 ],
+          [ " ", 2 ],
+          [ "-", 3 ]
+        ]);
+      }
+    );
+
+    it(
+      "Returns [ ..., [ '+', <added> ], ... ] when a is missing a value.",
+      () =>
+      {
+        expect(diff([ 1, 3 ], [ 1, 2, 3 ])).toEqual([
+          [ " ", 1 ],
+          [ "+", 2 ],
+          [ " ", 3 ]
+        ]);
+      }
+    );
+
+    it(
+      "Returns [ ..., [ '+', <added> ] ] when a is missing a value.",
+      () =>
+      {
+        expect(diff([ 1, 2 ], [ 1, 2, 3 ])).toEqual([
+          [ " ", 1 ],
+          [ " ", 2 ],
+          [ "+", 3 ]
+        ]);
+      }
+    );
+  });
 });
