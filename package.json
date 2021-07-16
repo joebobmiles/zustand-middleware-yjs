@@ -46,7 +46,6 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "json-diff": "^0.5.4",
     "yjs": "^13.5.11",
     "zustand": "^3.5.5"
   },
