@@ -54,7 +54,6 @@ const yjs = <S extends State>(
       {
         set(partial, replace);
         patchSharedType(map, get());
-        console.log(get(), map.toJSON());
       },
       get,
       {
