@@ -54,6 +54,7 @@ const yjs = <S extends State>(
       {
         set(partial, replace);
         patchSharedType(map, get());
+        console.log(get(), map.toJSON());
       },
       get,
       {
@@ -77,6 +78,7 @@ const yjs = <S extends State>(
      */
     map.observeDeep(() =>
     {
+      console.log(map.toJSON());
       patchStore(api, map.toJSON());
     });
 
