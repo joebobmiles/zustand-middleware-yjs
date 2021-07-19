@@ -6,6 +6,7 @@
     "rootDir": "./src",
     "removeComments": true,
     "moduleResolution": "node",
+    "jsx": "react",
     "allowJs": true,
 
     "strict": true,
