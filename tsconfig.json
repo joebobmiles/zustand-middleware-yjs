@@ -1,11 +1,13 @@
 {
   "compilerOptions": {
+    "rootDir": "src",
     "target": "es5",
     "declaration": true,
     "declarationDir": "./",
-    "rootDir": "./src",
     "removeComments": true,
     "moduleResolution": "node",
+    "jsx": "react",
+    "allowJs": true,
 
     "strict": true,
     "alwaysStrict": true,
@@ -18,8 +20,9 @@
   "exclude": [
     "node_modules",
     "dist",
+    "examples",
     "**/*.config.ts",
     "**/*.test.ts",
-    "**/*.spec.ts"
+    "**/*.spec.ts",
   ]
 }
