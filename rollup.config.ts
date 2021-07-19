@@ -27,4 +27,7 @@ export default defineConfig({
     "file": "dist/yjs.js",
     "format": "es",
   },
+  "external": [
+    "yjs"
+  ],
 });
