@@ -3,7 +3,6 @@
     "target": "es5",
     "declaration": true,
     "declarationDir": "./",
-    "rootDir": "./src",
     "removeComments": true,
     "moduleResolution": "node",
     "jsx": "react",
@@ -17,6 +16,10 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
+  "include": [
+    "./src",
+    "./test-react"
+  ],
   "exclude": [
     "node_modules",
     "dist",

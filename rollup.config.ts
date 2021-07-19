@@ -10,11 +10,13 @@ export default defineConfig({
     commonjs(),
     typescript({
       "tsconfig": "./tsconfig.json",
+      "rootDir": "src",
       "include": "**/*.(j|t)s",
       "exclude": [
         "node_modules",
         "dist",
         "examples",
+        "test-react",
         "**/*.(config|test|spec).(j|t)sx?"
       ],
     })
