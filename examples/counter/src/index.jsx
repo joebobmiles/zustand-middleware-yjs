@@ -1,6 +1,6 @@
 /* globals document */
 
-import React from "react";
+import React, { useState } from "react";
 import { render, } from "react-dom";
 
 import * as Y from "yjs";
@@ -12,17 +12,33 @@ import yjs from "zustand-middleware-yjs";
 const doc = new Y.Doc();
 new WebrtcProvider("counter-room", doc);
 
-const useStore = create(yjs(doc, "shared", (set) =>
+const useStore = create(yjs(doc, "shared",
+  (set) =>
   ({
-    "count": 1,
-    "increment": set((state) =>
+    "count": 0,
+    "increment": () => set((state) =>
       ({
         ...state,
         "count": state.count + 1,
       })),
   })));
 
+const App = () =>
+{
+  const { count, increment } = useStore((state) => ({
+    "count": state.count,
+    "increment": state.increment,
+  }));
+
+  return (
+    <>
+      <p>Count: {count}</p>
+      <button onClick={increment}>To the Moon!</button>
+    </>
+  );
+};
+
 render(
-  <h1>Hello, World!</h1>,
+  <App />,
   document.getElementById("app-root")
 );
