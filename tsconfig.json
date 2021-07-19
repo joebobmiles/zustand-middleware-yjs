@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "rootDir": "src",
     "target": "es5",
     "declaration": true,
     "declarationDir": "./",
@@ -16,10 +17,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": [
-    "./src",
-    "./test-react"
-  ],
   "exclude": [
     "node_modules",
     "dist",
