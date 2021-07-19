@@ -2,7 +2,7 @@ import create from "zustand/vanilla";
 import * as Y from "yjs";
 import yjs from ".";
 
-describe("Yjs middleware", () =>
+describe("Yjs middleware (vanilla)", () =>
 {
   it("Creates a useState function.", () =>
   {
