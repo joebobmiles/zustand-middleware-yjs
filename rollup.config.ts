@@ -11,6 +11,12 @@ export default defineConfig({
     typescript({
       "tsconfig": "./tsconfig.json",
       "include": "**/*.(j|t)s",
+      "exclude": [
+        "node_modules",
+        "dist",
+        "examples",
+        "**/*.(config|test|spec).(j|t)sx?"
+      ],
     })
   ],
   "output":
