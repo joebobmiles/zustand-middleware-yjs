@@ -77,7 +77,6 @@ const yjs = <S extends State>(
      */
     map.observeDeep(() =>
     {
-      console.log(map.toJSON());
       patchStore(api, map.toJSON());
     });
 
