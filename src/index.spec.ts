@@ -426,4 +426,31 @@ describe("Yjs middleware (vanilla)", () =>
       { "name": "bob", "status": "online", }
     ]);
   });
+
+  it("Does not reset state on join.", () =>
+  {
+    type Store =
+    {
+      count: number,
+      increment: () => void,
+    };
+
+    const doc = new Y.Doc();
+    doc.getMap("hello").set("count", 12);
+
+    const api =
+      create<Store>(yjs(
+        doc,
+        "hello",
+        (set) =>
+          ({
+            "count": 0,
+            "increment": () =>
+              set((state) =>
+                ({ "count": state.count + 1, })),
+          })
+      ));
+
+    expect(api.getState().count).toBe(12);
+  });
 });

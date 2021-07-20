@@ -197,6 +197,118 @@ export const patchSharedType = (
 };
 
 /**
+ * Patches oldState to be identical to newState. This function recurses when
+ * an array or object is encountered. If oldState and newState are already
+ * identical (indicated by an empty diff), then oldState is returned.
+ *
+ * @param oldState The state we want to patch.
+ * @param newState The state we want oldState to match after patching.
+ *
+ * @returns The patched oldState, identical to newState.
+ */
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export const patchObject = (oldState: any, newState: any): any =>
+{
+  const changes = getChangeList(oldState, newState);
+
+  if (changes.length === 0)
+    return oldState;
+
+  else if (oldState instanceof Array)
+  {
+    const p: any = changes
+      .sort(([ , indexA ], [ , indexB ]) =>
+        Math.sign((indexA as number) - (indexB as number)))
+      .reduce(
+        (state, [ type, index, value ]) =>
+        {
+          switch (type)
+          {
+          case "add":
+          case "update":
+          case "none":
+          {
+            return [
+              ...state,
+              value
+            ];
+          }
+
+          case "pending":
+          {
+            return [
+              ...state,
+              patchObject(
+                oldState[index as number],
+                newState[index as number]
+              )
+            ];
+          }
+
+          case "delete":
+          default:
+            return state;
+          }
+        },
+        [] as any[]
+      );
+
+    return p;
+  }
+
+  else if (oldState instanceof Object)
+  {
+    const p: any = changes.reduce(
+      (state, [ type, property, value ]) =>
+      {
+        switch (type)
+        {
+        case "add":
+        case "update":
+        case "none":
+        {
+          return {
+            ...state,
+            [property]: value,
+          };
+        }
+
+        case "pending":
+        {
+          return {
+            ...state,
+            [property]: patchObject(
+              oldState[property as string],
+              newState[property as string]
+            ),
+          };
+        }
+
+        case "delete":
+        default:
+          return state;
+        }
+      },
+      {}
+    );
+
+    return {
+      ...Object.entries(oldState).reduce(
+        (o, [ property, value ]) =>
+          (
+            value instanceof Function
+              ? { ...o, [property]: value, }
+              : o
+          ),
+        {}
+      ),
+      ...p,
+    };
+  }
+};
+
+
+/**
  * Diffs the current state stored in the Zustand store and the given newState.
  * The current Zustand state is patched into the given new state recursively.
  *
@@ -209,118 +321,8 @@ export const patchStore = <S extends State>(
   newState: any
 ): void =>
 {
-  /**
-   * Patches oldState to be identical to newState. This function recurses when
-   * an array or object is encountered. If oldState and newState are already
-   * identical (indicated by an empty diff), then oldState is returned.
-   *
-   * @param oldState The state we want to patch.
-   * @param newState The state we want oldState to match after patching.
-   *
-   * @returns The patched oldState, identical to newState.
-   */
-  const patch = (oldState: any, newState: any): any =>
-  {
-    const changes = getChangeList(oldState, newState);
-
-    if (changes.length === 0)
-      return oldState;
-
-    else if (oldState instanceof Array)
-    {
-      const p: any = changes
-        .sort(([ , indexA ], [ , indexB ]) =>
-          Math.sign((indexA as number) - (indexB as number)))
-        .reduce(
-          (state, [ type, index, value ]) =>
-          {
-            switch (type)
-            {
-            case "add":
-            case "update":
-            case "none":
-            {
-              return [
-                ...state,
-                value
-              ];
-            }
-
-            case "pending":
-            {
-              return [
-                ...state,
-                patch(
-                  oldState[index as number],
-                  newState[index as number]
-                )
-              ];
-            }
-
-            case "delete":
-            default:
-              return state;
-            }
-          },
-          [] as any[]
-        );
-
-      return p;
-    }
-
-    else if (oldState instanceof Object)
-    {
-      const p: any = changes.reduce(
-        (state, [ type, property, value ]) =>
-        {
-          switch (type)
-          {
-          case "add":
-          case "update":
-          case "none":
-          {
-            return {
-              ...state,
-              [property]: value,
-            };
-          }
-
-          case "pending":
-          {
-            return {
-              ...state,
-              [property]: patch(
-                oldState[property as string],
-                newState[property as string]
-              ),
-            };
-          }
-
-          case "delete":
-          default:
-            return state;
-          }
-        },
-        {}
-      );
-
-      return {
-        ...Object.entries(oldState).reduce(
-          (o, [ property, value ]) =>
-            (
-              value instanceof Function
-                ? { ...o, [property]: value, }
-                : o
-            ),
-          {}
-        ),
-        ...p,
-      };
-    }
-  };
-
   store.setState(
-    patch(store.getState(), newState),
+    patchObject(store.getState() || {}, newState),
     true // Replace with the patched state.
   );
 };
