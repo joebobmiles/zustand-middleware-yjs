@@ -30,11 +30,16 @@
     "email": "joe@jrm.dev",
     "url": "https://jrm.dev"
   },
-  "main": "dist/yjs.js",
+  "main": "dist/yjs.cjs",
+  "module": "dist/yjs.mjs",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
+  "exports": {
+    "require": "./dist/yjs.cjs",
+    "import": "./dist/yjs.mjs"
+  },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"

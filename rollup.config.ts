@@ -21,12 +21,19 @@ export default defineConfig({
       ],
     })
   ],
-  "output":
-  {
-    "name": "yjs",
-    "file": "dist/yjs.js",
-    "format": "es",
-  },
+  "output": [
+    {
+      "name": "ESM",
+      "file": "dist/yjs.mjs",
+      "format": "es",
+    },
+    {
+      "name": "CommonJs",
+      "file": "dist/yjs.cjs",
+      "format": "cjs",
+      "exports": "default",
+    }
+  ],
   "external": [
     "yjs"
   ],
