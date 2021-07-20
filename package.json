@@ -37,7 +37,6 @@
     "dist"
   ],
   "exports": {
-    "default": "./dist/yjs.cjs",
     "require": "./dist/yjs.cjs",
     "import": "./dist/yjs.mjs"
   },
