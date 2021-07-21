@@ -453,4 +453,121 @@ describe("Yjs middleware (vanilla)", () =>
 
     expect(api.getState().count).toBe(12);
   });
+
+  describe("When adding consecutive entries into arrays", () =>
+  {
+    it("Does not throw when inserting multiple scalars into arrays.", () =>
+    {
+      type Store =
+      {
+        numbers: number[],
+        addNumber: (n: number) => void,
+      };
+
+      const doc = new Y.Doc();
+
+      const api =
+        create<Store>(yjs(
+          doc,
+          "hello",
+          (set) =>
+            ({
+              "numbers": [],
+              "addNumber": (n) =>
+                set((state) =>
+                  ({
+                    "numbers": [
+                      ...state.numbers,
+                      n
+                    ],
+                  })),
+            })
+        ));
+
+      expect(api.getState().numbers).toEqual([]);
+
+      expect(() =>
+      {
+        api.getState().addNumber(0);
+        api.getState().addNumber(1);
+      }).not.toThrow();
+    });
+
+    it("Does not throw when inserting multiple arrays into arrays.", () =>
+    {
+      type Store =
+      {
+        arrays: Array<any>[],
+        addArray: (array: any[]) => void,
+      };
+
+      const doc = new Y.Doc();
+
+      const api =
+        create<Store>(yjs(
+          doc,
+          "hello",
+          (set) =>
+            ({
+              "arrays": [],
+              "addArray": (array) =>
+                set((state) =>
+                  ({
+                    "arrays": [
+                      ...state.arrays,
+                      array
+                    ],
+                  })),
+            })
+        ));
+
+      expect(api.getState().arrays).toEqual([]);
+
+      expect(() =>
+      {
+        api.getState().addArray([ 1, 2, 3, 4 ]);
+        api.getState().addArray([ "foo", "bar", "baz" ]);
+      }).not.toThrow();
+    });
+
+    it("Does not throw when inserting multiple maps into arrays.", () =>
+    {
+      type Store =
+      {
+        users: { name: string, status: "online" | "offline" }[],
+        addUser: (name: string, status: "online" | "offline") => void,
+      };
+
+      const doc = new Y.Doc();
+
+      const api =
+        create<Store>(yjs(
+          doc,
+          "hello",
+          (set) =>
+            ({
+              "users": [],
+              "addUser": (name, status) =>
+                set((state) =>
+                  ({
+                    "users": [
+                      ...state.users,
+                      {
+                        "name": name,
+                        "status": status,
+                      }
+                    ],
+                  })),
+            })
+        ));
+
+      expect(api.getState().users).toEqual([]);
+
+      expect(() =>
+      {
+        api.getState().addUser("alice", "offline");
+        api.getState().addUser("bob", "offline");
+      }).not.toThrow();
+    });
+  });
 });
