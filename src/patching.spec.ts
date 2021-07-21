@@ -214,6 +214,24 @@ describe("patchSharedType", () =>
     expect(ymap.get("array").length).toBe(0);
   });
 
+  it.each([
+    [
+      [ 1, 2, 3 ],
+      [ 1 ]
+    ],
+    [
+      [ 1, 2, 3, 4 ],
+      [ 1, 4 ]
+    ]
+  ])("Deletes multiple items from arrays", (initialState, updatedState) =>
+  {
+    ymap.set("array", arrayToYArray(initialState));
+    patchSharedType(ymap.get("array"), updatedState);
+
+    expect(ymap.get("array").length).toBe(updatedState.length);
+    expect(ymap.get("array").toJSON()).toEqual(updatedState);
+  });
+
   it("Combines additions and deletions into updates for arrays", () =>
   {
     ymap.set("array", arrayToYArray([ 1 ]));
@@ -221,6 +239,23 @@ describe("patchSharedType", () =>
 
     expect(ymap.get("array").get(0)).toBe(2);
     expect(ymap.get("array").get(1)).toBe(3);
+  });
+
+  it("Applies additions of nested arrays in arrays", () =>
+  {
+    ymap.set("array", arrayToYArray([ 1 ]));
+    patchSharedType(ymap.get("array"), [ 1, [ 2 ] ]);
+
+    expect((ymap.get("array").get(1) as Y.Array<any>).toJSON()).toEqual([ 2 ]);
+  });
+
+  it("Applies additions of nested objects in arrays", () =>
+  {
+    ymap.set("array", arrayToYArray([ 1 ]));
+    patchSharedType(ymap.get("array"), [ 1, { "foo": 2, } ]);
+
+    expect((ymap.get("array").get(1) as Y.Map<any>).toJSON())
+      .toEqual({ "foo": 2, });
   });
 
   it("Applies additions to arrays nested in arrays.", () =>
