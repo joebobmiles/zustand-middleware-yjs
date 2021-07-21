@@ -231,6 +231,15 @@ describe("patchSharedType", () =>
     expect((ymap.get("array").get(1) as Y.Array<any>).toJSON()).toEqual([ 2 ]);
   });
 
+  it("Applies additions of nested objects in arrays", () =>
+  {
+    ymap.set("array", arrayToYArray([ 1 ]));
+    patchSharedType(ymap.get("array"), [ 1, { "foo": 2, } ]);
+
+    expect((ymap.get("array").get(1) as Y.Map<any>).toJSON())
+      .toEqual({ "foo": 2, });
+  });
+
   it("Applies additions to arrays nested in arrays.", () =>
   {
     ymap.set("array", arrayToYArray([ 1, [ ] ]));
