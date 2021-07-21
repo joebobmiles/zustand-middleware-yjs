@@ -214,6 +214,15 @@ describe("patchSharedType", () =>
     expect(ymap.get("array").length).toBe(0);
   });
 
+  it("Deletes multiple items from arrays", () =>
+  {
+    ymap.set("array", arrayToYArray([ 1, 2, 3 ]));
+    patchSharedType(ymap.get("array"), [ 1 ]);
+
+    expect(ymap.get("array").length).toBe(1);
+    expect(ymap.get("array").toJSON()).toEqual([ 1 ]);
+  });
+
   it("Combines additions and deletions into updates for arrays", () =>
   {
     ymap.set("array", arrayToYArray([ 1 ]));
