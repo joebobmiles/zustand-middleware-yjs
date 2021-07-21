@@ -155,7 +155,12 @@ export const patchSharedType = (
         sharedType.delete(property as string);
 
       else if (sharedType instanceof Y.Array)
-        sharedType.delete(property as number);
+      {
+        const index = property as number;
+        sharedType.delete(sharedType.length <= index
+          ? sharedType.length - 1
+          : index);
+      }
 
       break;
 
