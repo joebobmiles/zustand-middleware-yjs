@@ -214,13 +214,22 @@ describe("patchSharedType", () =>
     expect(ymap.get("array").length).toBe(0);
   });
 
-  it("Deletes multiple items from arrays", () =>
+  it.each([
+    [
+      [ 1, 2, 3 ],
+      [ 1 ]
+    ],
+    [
+      [ 1, 2, 3, 4 ],
+      [ 1, 4 ]
+    ]
+  ])("Deletes multiple items from arrays", (initialState, updatedState) =>
   {
-    ymap.set("array", arrayToYArray([ 1, 2, 3 ]));
-    patchSharedType(ymap.get("array"), [ 1 ]);
+    ymap.set("array", arrayToYArray(initialState));
+    patchSharedType(ymap.get("array"), updatedState);
 
-    expect(ymap.get("array").length).toBe(1);
-    expect(ymap.get("array").toJSON()).toEqual([ 1 ]);
+    expect(ymap.get("array").length).toBe(updatedState.length);
+    expect(ymap.get("array").toJSON()).toEqual(updatedState);
   });
 
   it("Combines additions and deletions into updates for arrays", () =>
