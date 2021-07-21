@@ -137,29 +137,15 @@ export const patchSharedType = (
         {
           const index = property as number;
 
-          const left = sharedType.slice(0, index);
-          const right = sharedType.slice(index+1);
-
-          sharedType.delete(0, sharedType.length);
+          if (type === "update")
+            sharedType.delete(index);
 
           if (value instanceof Array)
-          {
-            sharedType.insert(0, [
-              ...left,
-              arrayToYArray(value),
-              ...right
-            ]);
-          }
+            sharedType.insert(index, [ arrayToYArray(value) ]);
           else if (value instanceof Object)
-          {
-            sharedType.insert(0, [
-              ...left,
-              objectToYMap(value),
-              ...right
-            ]);
-          }
+            sharedType.insert(index, [ objectToYMap(value) ]);
           else
-            sharedType.insert(0, [ ...left, value, ...right ]);
+            sharedType.insert(index, [ value ]);
         }
       }
       break;
@@ -169,7 +155,7 @@ export const patchSharedType = (
         sharedType.delete(property as string);
 
       else if (sharedType instanceof Y.Array)
-        sharedType.delete(property as number, 1);
+        sharedType.delete(property as number);
 
       break;
 
