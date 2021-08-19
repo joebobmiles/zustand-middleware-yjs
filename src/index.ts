@@ -69,6 +69,7 @@ const yjs = <S extends State>(
 
     // Initialize the Yjs store.
     if (Array.from(map.keys()).length === 0)
+      // THIS IS THE PROBLEM
       patchSharedType(map, initialState);
 
     else

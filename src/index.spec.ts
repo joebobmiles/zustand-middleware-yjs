@@ -1,8 +1,11 @@
 import create from "zustand/vanilla";
+
 import * as Y from "yjs";
+import { WebsocketProvider, } from "y-websocket";
+
 import yjs from ".";
 
-describe("Yjs middleware (vanilla)", () =>
+describe("Yjs middleware", () =>
 {
   it("Creates a useState function.", () =>
   {
@@ -569,5 +572,92 @@ describe("Yjs middleware (vanilla)", () =>
         api.getState().addUser("bob", "offline");
       }).not.toThrow();
     });
+  });
+});
+
+describe("Yjs middleware with network provider", () =>
+{
+  it("Does not reset state on second join.", async () =>
+  {
+    const address = "ws://localhost:1234";
+    const roomName = "room";
+    const mapName = "shared";
+
+    type State =
+    {
+      count: number,
+      increment: () => void,
+    };
+
+    const doc1 = new Y.Doc();
+    const provider1 = new WebsocketProvider(
+      address,
+      roomName,
+      doc1,
+      {
+        "WebSocketPolyfill": require("ws"),
+      }
+    );
+    const store1 = create<State>(yjs(
+      doc1,
+      mapName,
+      (set) =>
+        ({
+          "count": 0,
+          "increment": () =>
+            set((state) =>
+              ({ "count": state.count + 1, })),
+        })
+    ));
+
+    store1.getState().increment();
+
+    expect(store1.getState().count).toBe(1);
+
+    const doc2 = new Y.Doc();
+    const provider2 = new WebsocketProvider(
+      address,
+      roomName,
+      doc2,
+      {
+        "WebSocketPolyfill": require("ws"),
+      }
+    );
+    const store2 = create<State>(yjs(
+      doc2,
+      mapName,
+      (set) =>
+        ({
+          "count": 0,
+          "increment": () =>
+            set((state) =>
+              ({ "count": state.count + 1, })),
+        })
+    ));
+
+    await new Promise<void>((resolve) =>
+      setTimeout(
+        () =>
+          resolve(),
+        25
+      ));
+
+    expect(store1.getState().count).toBe(1);
+    expect(store2.getState().count).toBe(1);
+
+    store1.getState().increment();
+
+    await new Promise<void>((resolve) =>
+      setTimeout(
+        () =>
+          resolve(),
+        25
+      ));
+
+    expect(store1.getState().count).toBe(2);
+    expect(store2.getState().count).toBe(2);
+
+    provider1.destroy();
+    provider2.destroy();
   });
 });
