@@ -1,3 +1,6 @@
+import { spawn, ChildProcess, } from "child_process";
+import path from "path";
+
 import create from "zustand/vanilla";
 
 import * as Y from "yjs";
@@ -33,39 +36,6 @@ describe("Yjs middleware", () =>
     getState().increment();
 
     expect(getState().count).toBe(1);
-  });
-
-  it("Writes to the Yjs store.", () =>
-  {
-    type Store =
-    {
-      count: number,
-      increment: () => void,
-    };
-
-    const doc = new Y.Doc();
-    const storeName = "store";
-
-    const { getState, } =
-      create<Store>(yjs(
-        doc,
-        storeName,
-        (set) =>
-          ({
-            "count": 0,
-            "increment": () =>
-              set((state) =>
-                ({ "count": state.count + 1, })),
-          })
-      ));
-
-    expect(getState().count).toBe(0);
-    expect(doc.getMap(storeName).get("count")).toBe(0);
-
-    getState().increment();
-
-    expect(getState().count).toBe(1);
-    expect(doc.getMap(storeName).get("count")).toBe(1);
   });
 
   it("Receives changes from peers.", () =>
@@ -597,11 +567,54 @@ describe("Yjs middleware", () =>
   });
 });
 
+
 describe("Yjs middleware with network provider", () =>
 {
+  // eslint-disable-next-line @typescript-eslint/init-declarations
+  let server: ChildProcess;
+  const port = 1234;
+
+  const waitForProviderToConnect = async (provider: WebsocketProvider) =>
+    new Promise<void>((resolve) =>
+    {
+      (function waitForFoo()
+      {
+        if (provider.wsconnected) return resolve();
+        setTimeout(waitForFoo, 30);
+      })();
+    });
+
+
+  // Startup y-websocket demo server for test.
+  beforeEach(async () =>
+  {
+    server = spawn(
+      "node",
+      [ "./node_modules/y-websocket/bin/server.js" ],
+      {
+        "cwd": path.resolve(__dirname, ".."),
+        "windowsHide": true,
+        "env": {
+          "HOST": "localhost",
+          "PORT": port.toString(),
+        },
+      }
+    );
+
+    // Give the server plenty of time to come online.
+    await new Promise<void>((resolve) =>
+      setTimeout(resolve, 1000));
+  });
+
+  // Kill y-websocket demo server after test has completed.
+  afterEach(() =>
+  {
+    server.kill();
+  });
+
   it("Does not reset state on second join.", async () =>
   {
-    const address = "ws://localhost:1234";
+    const address = `ws://localhost:${port}`;
     const roomName = "room";
     const mapName = "shared";
 
@@ -632,6 +645,8 @@ describe("Yjs middleware with network provider", () =>
         })
     ));
 
+    await waitForProviderToConnect(provider1);
+
     store1.getState().increment();
 
     expect(store1.getState().count).toBe(1);
@@ -657,29 +672,19 @@ describe("Yjs middleware with network provider", () =>
         })
     ));
 
-    await new Promise<void>((resolve) =>
-      setTimeout(
-        () =>
-          resolve(),
-        25
-      ));
+    await waitForProviderToConnect(provider2);
 
     expect(store1.getState().count).toBe(1);
     expect(store2.getState().count).toBe(1);
 
     store1.getState().increment();
 
-    await new Promise<void>((resolve) =>
-      setTimeout(
-        () =>
-          resolve(),
-        25
-      ));
-
     expect(store1.getState().count).toBe(2);
     expect(store2.getState().count).toBe(2);
 
+    provider1.awareness.destroy();
     provider1.destroy();
+    provider2.awareness.destroy();
     provider2.destroy();
   });
 });
