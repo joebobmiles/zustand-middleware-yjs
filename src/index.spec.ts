@@ -149,7 +149,7 @@ describe("Yjs middleware", () =>
 
     const storeName = "store";
 
-    const { getState, } =
+    const { "getState": getStateA, } =
       create<Store>(yjs(
         doc1,
         storeName,
@@ -167,15 +167,31 @@ describe("Yjs middleware", () =>
           })
       ));
 
-    const peerStore = doc2.getMap(storeName);
+    const { "getState": getStateB, } =
+      create<Store>(yjs(
+        doc2,
+        storeName,
+        (set) =>
+          ({
+            "person": {
+              "age": 0,
+              "name": "Joe",
+            },
+            "getOlder": () =>
+              set((state) =>
+                ({
+                  "person": { ...state.person, "age": state.person.age + 1, },
+                })),
+          })
+      ));
 
-    expect(getState().person.age).toBe(0);
-    expect(peerStore.get("person").get("age")).toBe(0);
+    expect(getStateA().person.age).toBe(0);
+    expect(getStateB().person.age).toBe(0);
 
-    getState().getOlder();
+    getStateA().getOlder();
 
-    expect(getState().person.age).toBe(1);
-    expect(peerStore.get("person").get("age")).toBe(1);
+    expect(getStateA().person.age).toBe(1);
+    expect(getStateB().person.age).toBe(1);
   });
 
   it("Performs deep nested updates.", () =>
@@ -205,7 +221,32 @@ describe("Yjs middleware", () =>
 
     const storeName = "store";
 
-    const { getState, } =
+    const { "getState": getStateA, } =
+      create<Store>(yjs(
+        doc1,
+        storeName,
+        (set) =>
+          ({
+            "owner": {
+              "person": {
+                "age": 0,
+                "name": "Joe",
+              },
+            },
+            "getOlder": () =>
+              set((state) =>
+                ({
+                  "owner": {
+                    ...state.owner,
+                    "person": {
+                      ...state.owner.person,
+                      "age": state.owner.person.age + 1,
+                    },
+                  },
+                })),
+          })
+      ));
+    const { "getState": getStateB, } =
       create<Store>(yjs(
         doc1,
         storeName,
@@ -231,17 +272,13 @@ describe("Yjs middleware", () =>
           })
       ));
 
-    const peerStore = doc2.getMap(storeName);
+    expect(getStateA().owner.person.age).toBe(0);
+    expect(getStateB().owner.person.age).toBe(0);
 
-    expect(getState().owner.person.age).toBe(0);
-    expect(peerStore.get("owner").get("person")
-      .get("age")).toBe(0);
+    getStateA().getOlder();
 
-    getState().getOlder();
-
-    expect(getState().owner.person.age).toBe(1);
-    expect(peerStore.get("owner").get("person")
-      .get("age")).toBe(1);
+    expect(getStateA().owner.person.age).toBe(1);
+    expect(getStateB().owner.person.age).toBe(1);
   });
 
   it("Updates arrays in objects.", () =>
@@ -268,7 +305,7 @@ describe("Yjs middleware", () =>
 
     const storeName = "store";
 
-    const { getState, } =
+    const { "getState": getStateA, } =
       create<Store>(yjs(
         doc1,
         storeName,
@@ -295,17 +332,40 @@ describe("Yjs middleware", () =>
           })
       ));
 
-    const peerStore = doc2.getMap(storeName);
+    const { "getState": getStateB, } =
+      create<Store>(yjs(
+        doc1,
+        storeName,
+        (set) =>
+          ({
+            "room": {
+              "users": [
+                "amy",
+                "sam",
+                "harold"
+              ],
+            },
+            "join": (user) =>
+              set((state) =>
+                ({
+                  "room": {
+                    ...state.room,
+                    "users": [
+                      ...state.room.users,
+                      user
+                    ],
+                  },
+                })),
+          })
+      ));
 
-    expect(getState().room.users).toEqual([ "amy", "sam", "harold" ]);
-    expect(peerStore.get("room").get("users")
-      .toJSON()).toEqual([ "amy", "sam", "harold" ]);
+    expect(getStateA().room.users).toEqual([ "amy", "sam", "harold" ]);
+    expect(getStateB().room.users).toEqual([ "amy", "sam", "harold" ]);
 
-    getState().join("bob");
+    getStateA().join("bob");
 
-    expect(getState().room.users).toEqual([ "amy", "sam", "harold", "bob" ]);
-    expect(peerStore.get("room").get("users")
-      .toJSON()).toEqual([ "amy", "sam", "harold", "bob" ]);
+    expect(getStateA().room.users).toEqual([ "amy", "sam", "harold", "bob" ]);
+    expect(getStateB().room.users).toEqual([ "amy", "sam", "harold", "bob" ]);
   });
 
   it("Updates objects in arrays.", () =>
@@ -330,7 +390,7 @@ describe("Yjs middleware", () =>
 
     const storeName = "store";
 
-    const { getState, } =
+    const { "getState": getStateA, } =
       create<Store>(yjs(
         doc1,
         storeName,
@@ -364,54 +424,59 @@ describe("Yjs middleware", () =>
           })
       ));
 
-    const peerStore = doc2.getMap(storeName);
-
-    expect(getState().users).toEqual([
-      { "name": "alice", "status": "offline", },
-      { "name": "bob", "status": "offline", }
-    ]);
-    expect(peerStore.get("users").toJSON()).toEqual([
-      { "name": "alice", "status": "offline", },
-      { "name": "bob", "status": "offline", }
-    ]);
-
-    getState().setStatus("bob", "online");
-
-    expect(getState().users).toEqual([
-      { "name": "alice", "status": "offline", },
-      { "name": "bob", "status": "online", }
-    ]);
-    expect(peerStore.get("users").toJSON()).toEqual([
-      { "name": "alice", "status": "offline", },
-      { "name": "bob", "status": "online", }
-    ]);
-  });
-
-  it("Does not reset state on join.", () =>
-  {
-    type Store =
-    {
-      count: number,
-      increment: () => void,
-    };
-
-    const doc = new Y.Doc();
-    doc.getMap("hello").set("count", 12);
-
-    const api =
+    const { "getState": getStateB, } =
       create<Store>(yjs(
-        doc,
-        "hello",
+        doc1,
+        storeName,
         (set) =>
           ({
-            "count": 0,
-            "increment": () =>
+            "users": [
+              {
+                "name": "alice",
+                "status": "offline",
+              },
+              {
+                "name": "bob",
+                "status": "offline",
+              }
+            ],
+            "setStatus": (userName, status) =>
+            {
               set((state) =>
-                ({ "count": state.count + 1, })),
+                ({
+                  ...state,
+                  "users": [
+                    ...state.users.filter(({ name, }) =>
+                      name !== userName),
+                    {
+                      "name": userName,
+                      "status": status,
+                    }
+                  ],
+                }));
+            },
           })
       ));
 
-    expect(api.getState().count).toBe(12);
+    expect(getStateA().users).toEqual([
+      { "name": "alice", "status": "offline", },
+      { "name": "bob", "status": "offline", }
+    ]);
+    expect(getStateB().users).toEqual([
+      { "name": "alice", "status": "offline", },
+      { "name": "bob", "status": "offline", }
+    ]);
+
+    getStateA().setStatus("bob", "online");
+
+    expect(getStateA().users).toEqual([
+      { "name": "alice", "status": "offline", },
+      { "name": "bob", "status": "online", }
+    ]);
+    expect(getStateA().users).toEqual([
+      { "name": "alice", "status": "offline", },
+      { "name": "bob", "status": "online", }
+    ]);
   });
 
   describe("When adding consecutive entries into arrays", () =>
