@@ -43,23 +43,12 @@ describe("Yjs middleware", () =>
       increment: () => void,
     };
 
-    const doc1 = new Y.Doc();
-    const doc2 = new Y.Doc();
-
-    doc1.on("update", (update: any) =>
-    {
-      Y.applyUpdate(doc2, update);
-    });
-    doc2.on("update", (update: any) =>
-    {
-      Y.applyUpdate(doc1, update);
-    });
-
+    const doc = new Y.Doc();
     const storeName = "store";
 
     const { getState, } =
       create<Store>(yjs(
-        doc1,
+        doc,
         storeName,
         (set) =>
           ({
@@ -70,15 +59,13 @@ describe("Yjs middleware", () =>
           })
       ));
 
-    const peerStore = doc2.getMap(storeName);
-
     expect(getState().count).toBe(0);
-    expect(peerStore.get("count")).toBe(0);
+    expect(doc.getMap(storeName).get("count")).toBe(0);
 
     getState().increment();
 
     expect(getState().count).toBe(1);
-    expect(peerStore.get("count")).toBe(1);
+    expect(doc.getMap(storeName).get("count")).toBe(1);
   });
 
   it("Receives changes from peers.", () =>
@@ -103,7 +90,7 @@ describe("Yjs middleware", () =>
 
     const storeName = "store";
 
-    const { getState, } =
+    const { "getState": getStateA, } =
       create<Store>(yjs(
         doc1,
         storeName,
@@ -116,42 +103,9 @@ describe("Yjs middleware", () =>
           })
       ));
 
-    const peerStore = doc2.getMap(storeName);
-
-    expect(getState().count).toBe(0);
-    expect(peerStore.get("count")).toBe(0);
-
-    peerStore.set("count", 12);
-
-    expect(getState().count).toBe(12);
-    expect(peerStore.get("count")).toBe(12);
-  });
-
-  it("Does not send peer stores functions.", () =>
-  {
-    type Store =
-    {
-      count: number,
-      increment: () => void,
-    };
-
-    const doc1 = new Y.Doc();
-    const doc2 = new Y.Doc();
-
-    doc1.on("update", (update: any) =>
-    {
-      Y.applyUpdate(doc2, update);
-    });
-    doc2.on("update", (update: any) =>
-    {
-      Y.applyUpdate(doc1, update);
-    });
-
-    const storeName = "store";
-
-    const { getState, } =
+    const { "getState": getStateB, } =
       create<Store>(yjs(
-        doc1,
+        doc2,
         storeName,
         (set) =>
           ({
@@ -162,10 +116,13 @@ describe("Yjs middleware", () =>
           })
       ));
 
-    const peerStore = doc2.getMap(storeName);
+    expect(getStateA().count).toBe(0);
+    expect(getStateB().count).toBe(0);
 
-    expect(getState().increment).not.toBeUndefined();
-    expect(peerStore.get("increment")).toBeUndefined();
+    getStateA().increment();
+
+    expect(getStateA().count).toBe(1);
+    expect(getStateB().count).toBe(1);
   });
 
   it("Performs nested updates.", () =>
