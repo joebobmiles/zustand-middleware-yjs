@@ -71,8 +71,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      - run: node --version
-
       - run: npm run test
 
       - uses: actions/upload-artifact@v2
