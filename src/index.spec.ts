@@ -595,6 +595,7 @@ describe("Yjs middleware with network provider", () =>
         "cwd": path.resolve(__dirname, ".."),
         "windowsHide": true,
         "env": {
+          ...process.env,
           "HOST": "localhost",
           "PORT": port.toString(),
         },
