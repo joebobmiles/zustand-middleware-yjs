@@ -42,10 +42,17 @@ const yjs = <S extends State>(
   return (set: SetState<S>, get: GetState<S>, api: StoreApi<S>): S =>
   {
     /*
-     * Capture the initial state so that we can initialize the Yjs store to the
-     * same values as the initial values of the Zustand store.
+     * Whenever the Yjs store changes, we perform a set operation on the local
+     * Zustand store. We avoid using the Yjs enabled set to prevent unnecessary
+     * ping-pong of updates.
      */
-    const initialState = config(
+    map.observeDeep(() =>
+    {
+      patchStore(api, map.toJSON());
+    });
+
+    // Return the initial state to create or the next middleware.
+    return config(
       /*
        * Create a new set function that defers to the original and then passes
        * the new state to patchSharedType.
@@ -66,19 +73,6 @@ const yjs = <S extends State>(
         },
       }
     );
-
-    /*
-     * Whenever the Yjs store changes, we perform a set operation on the local
-     * Zustand store. We avoid using the Yjs enabled set to prevent unnecessary
-     * ping-pong of updates.
-     */
-    map.observeDeep(() =>
-    {
-      patchStore(api, map.toJSON());
-    });
-
-    // Return the initial state to create or the next middleware.
-    return initialState;
   };
 };
 
