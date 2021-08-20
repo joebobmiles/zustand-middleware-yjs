@@ -1,0 +1,25 @@
+{
+  "name": "awareness",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^2.5.0"
+  },
+  "dependencies": {
+    "do-usernames": "^1.0.2",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "uuid": "^8.3.2",
+    "y-webrtc": "^10.2.0",
+    "yjs": "^13.5.12",
+    "zustand": "^3.5.9",
+    "zustand-middleware-yjs": "^1.2.5"
+  }
+}

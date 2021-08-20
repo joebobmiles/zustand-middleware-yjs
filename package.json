@@ -51,6 +51,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
+    "uuid": "^8.3.2",
     "yjs": "^13.5.11",
     "zustand": "^3.5.5"
   },
