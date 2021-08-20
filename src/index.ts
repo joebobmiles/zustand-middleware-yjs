@@ -6,7 +6,7 @@ import {
   StoreApi,
 } from "zustand/vanilla";
 import * as Y from "yjs";
-import { patchObject, patchSharedType, patchStore, } from "./patching";
+import { patchSharedType, patchStore, } from "./patching";
 
 /**
  * This function is the middleware the sets up the Zustand store to mirror state
@@ -45,7 +45,7 @@ const yjs = <S extends State>(
      * Capture the initial state so that we can initialize the Yjs store to the
      * same values as the initial values of the Zustand store.
      */
-    let initialState = config(
+    const initialState = config(
       /*
        * Create a new set function that defers to the original and then passes
        * the new state to patchSharedType.
@@ -66,13 +66,6 @@ const yjs = <S extends State>(
         },
       }
     );
-
-    // Initialize the Yjs store.
-    if (Array.from(map.keys()).length === 0)
-      patchSharedType(map, initialState);
-
-    else
-      initialState = patchObject(initialState, map.toJSON());
 
     /*
      * Whenever the Yjs store changes, we perform a set operation on the local
