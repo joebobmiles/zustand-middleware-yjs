@@ -28,7 +28,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         if: ${{ failure() }}
         with:
-          name: npm-install-log-commitlint
+          name: commitlint-error-log
           path: /home/runner/.npm/_logs
 
   eslint:
@@ -52,7 +52,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         if: ${{ failure() }}
         with:
-          name: npm-install-log-eslint
+          name: eslint-error-log
           path: /home/runner/.npm/_logs
 
   test:
@@ -76,5 +76,5 @@ jobs:
       - uses: actions/upload-artifact@v2
         if: ${{ failure() }}
         with:
-          name: npm-install-log-test
+          name: test-error-log
           path: /home/runner/.npm/_logs
