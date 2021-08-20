@@ -13,7 +13,7 @@ import { patchSharedType, patchStore, } from "./patching";
  * into a Yjs store for peer-to-peer synchronization.
  *
  * @example <caption>Using yjs</caption>
- * const useState = create(
+ * const useStore = create(
  *   yjs(
  *     new Y.Doc(), // A Y.Doc to back our store with.
  *     "shared",    // A name to give the Y.Map our store is backed by.
