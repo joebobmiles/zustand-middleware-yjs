@@ -78,9 +78,8 @@ render(
 
  1. Currently the Y Text shared type is not supported. This means that strings
     in the store do not benefit from the conflict-resolution performed by Yjs.
- 1. The Yjs awareness protocol is not supported. At the moment, it is unclear
-    if the library is able to support Yjs protocols. This means that, for now,
-    support for the awareness protocol is not planned.
+ 1. The Yjs protocols are not supported. Protocols like awareness can be
+    emulated with Yjs-backed Zustand stores.
 
 # License
 
