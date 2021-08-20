@@ -54,7 +54,7 @@ const useSharedStore = create(
 // Use the shared store like you normally would any other Zustand store.
 const App = () =>
 {
-  const { count, increment } = useSharedState((state) =>
+  const { count, increment } = useSharedStore((state) =>
     ({
       count: state.count,
       increment: state.increment
