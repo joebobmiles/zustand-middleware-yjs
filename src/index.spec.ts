@@ -1,8 +1,14 @@
+import { spawn, ChildProcess, } from "child_process";
+import path from "path";
+
 import create from "zustand/vanilla";
+
 import * as Y from "yjs";
+import { WebsocketProvider, } from "y-websocket";
+
 import yjs from ".";
 
-describe("Yjs middleware (vanilla)", () =>
+describe("Yjs middleware", () =>
 {
   it("Creates a useState function.", () =>
   {
@@ -32,52 +38,6 @@ describe("Yjs middleware (vanilla)", () =>
     expect(getState().count).toBe(1);
   });
 
-  it("Writes to the Yjs store.", () =>
-  {
-    type Store =
-    {
-      count: number,
-      increment: () => void,
-    };
-
-    const doc1 = new Y.Doc();
-    const doc2 = new Y.Doc();
-
-    doc1.on("update", (update: any) =>
-    {
-      Y.applyUpdate(doc2, update);
-    });
-    doc2.on("update", (update: any) =>
-    {
-      Y.applyUpdate(doc1, update);
-    });
-
-    const storeName = "store";
-
-    const { getState, } =
-      create<Store>(yjs(
-        doc1,
-        storeName,
-        (set) =>
-          ({
-            "count": 0,
-            "increment": () =>
-              set((state) =>
-                ({ "count": state.count + 1, })),
-          })
-      ));
-
-    const peerStore = doc2.getMap(storeName);
-
-    expect(getState().count).toBe(0);
-    expect(peerStore.get("count")).toBe(0);
-
-    getState().increment();
-
-    expect(getState().count).toBe(1);
-    expect(peerStore.get("count")).toBe(1);
-  });
-
   it("Receives changes from peers.", () =>
   {
     type Store =
@@ -100,7 +60,7 @@ describe("Yjs middleware (vanilla)", () =>
 
     const storeName = "store";
 
-    const { getState, } =
+    const { "getState": getStateA, } =
       create<Store>(yjs(
         doc1,
         storeName,
@@ -113,42 +73,9 @@ describe("Yjs middleware (vanilla)", () =>
           })
       ));
 
-    const peerStore = doc2.getMap(storeName);
-
-    expect(getState().count).toBe(0);
-    expect(peerStore.get("count")).toBe(0);
-
-    peerStore.set("count", 12);
-
-    expect(getState().count).toBe(12);
-    expect(peerStore.get("count")).toBe(12);
-  });
-
-  it("Does not send peer stores functions.", () =>
-  {
-    type Store =
-    {
-      count: number,
-      increment: () => void,
-    };
-
-    const doc1 = new Y.Doc();
-    const doc2 = new Y.Doc();
-
-    doc1.on("update", (update: any) =>
-    {
-      Y.applyUpdate(doc2, update);
-    });
-    doc2.on("update", (update: any) =>
-    {
-      Y.applyUpdate(doc1, update);
-    });
-
-    const storeName = "store";
-
-    const { getState, } =
+    const { "getState": getStateB, } =
       create<Store>(yjs(
-        doc1,
+        doc2,
         storeName,
         (set) =>
           ({
@@ -159,10 +86,13 @@ describe("Yjs middleware (vanilla)", () =>
           })
       ));
 
-    const peerStore = doc2.getMap(storeName);
+    expect(getStateA().count).toBe(0);
+    expect(getStateB().count).toBe(0);
 
-    expect(getState().increment).not.toBeUndefined();
-    expect(peerStore.get("increment")).toBeUndefined();
+    getStateA().increment();
+
+    expect(getStateA().count).toBe(1);
+    expect(getStateB().count).toBe(1);
   });
 
   it("Performs nested updates.", () =>
@@ -189,7 +119,7 @@ describe("Yjs middleware (vanilla)", () =>
 
     const storeName = "store";
 
-    const { getState, } =
+    const { "getState": getStateA, } =
       create<Store>(yjs(
         doc1,
         storeName,
@@ -207,15 +137,31 @@ describe("Yjs middleware (vanilla)", () =>
           })
       ));
 
-    const peerStore = doc2.getMap(storeName);
+    const { "getState": getStateB, } =
+      create<Store>(yjs(
+        doc2,
+        storeName,
+        (set) =>
+          ({
+            "person": {
+              "age": 0,
+              "name": "Joe",
+            },
+            "getOlder": () =>
+              set((state) =>
+                ({
+                  "person": { ...state.person, "age": state.person.age + 1, },
+                })),
+          })
+      ));
 
-    expect(getState().person.age).toBe(0);
-    expect(peerStore.get("person").get("age")).toBe(0);
+    expect(getStateA().person.age).toBe(0);
+    expect(getStateB().person.age).toBe(0);
 
-    getState().getOlder();
+    getStateA().getOlder();
 
-    expect(getState().person.age).toBe(1);
-    expect(peerStore.get("person").get("age")).toBe(1);
+    expect(getStateA().person.age).toBe(1);
+    expect(getStateB().person.age).toBe(1);
   });
 
   it("Performs deep nested updates.", () =>
@@ -245,7 +191,32 @@ describe("Yjs middleware (vanilla)", () =>
 
     const storeName = "store";
 
-    const { getState, } =
+    const { "getState": getStateA, } =
+      create<Store>(yjs(
+        doc1,
+        storeName,
+        (set) =>
+          ({
+            "owner": {
+              "person": {
+                "age": 0,
+                "name": "Joe",
+              },
+            },
+            "getOlder": () =>
+              set((state) =>
+                ({
+                  "owner": {
+                    ...state.owner,
+                    "person": {
+                      ...state.owner.person,
+                      "age": state.owner.person.age + 1,
+                    },
+                  },
+                })),
+          })
+      ));
+    const { "getState": getStateB, } =
       create<Store>(yjs(
         doc1,
         storeName,
@@ -271,17 +242,13 @@ describe("Yjs middleware (vanilla)", () =>
           })
       ));
 
-    const peerStore = doc2.getMap(storeName);
+    expect(getStateA().owner.person.age).toBe(0);
+    expect(getStateB().owner.person.age).toBe(0);
 
-    expect(getState().owner.person.age).toBe(0);
-    expect(peerStore.get("owner").get("person")
-      .get("age")).toBe(0);
+    getStateA().getOlder();
 
-    getState().getOlder();
-
-    expect(getState().owner.person.age).toBe(1);
-    expect(peerStore.get("owner").get("person")
-      .get("age")).toBe(1);
+    expect(getStateA().owner.person.age).toBe(1);
+    expect(getStateB().owner.person.age).toBe(1);
   });
 
   it("Updates arrays in objects.", () =>
@@ -308,7 +275,7 @@ describe("Yjs middleware (vanilla)", () =>
 
     const storeName = "store";
 
-    const { getState, } =
+    const { "getState": getStateA, } =
       create<Store>(yjs(
         doc1,
         storeName,
@@ -335,17 +302,40 @@ describe("Yjs middleware (vanilla)", () =>
           })
       ));
 
-    const peerStore = doc2.getMap(storeName);
+    const { "getState": getStateB, } =
+      create<Store>(yjs(
+        doc1,
+        storeName,
+        (set) =>
+          ({
+            "room": {
+              "users": [
+                "amy",
+                "sam",
+                "harold"
+              ],
+            },
+            "join": (user) =>
+              set((state) =>
+                ({
+                  "room": {
+                    ...state.room,
+                    "users": [
+                      ...state.room.users,
+                      user
+                    ],
+                  },
+                })),
+          })
+      ));
 
-    expect(getState().room.users).toEqual([ "amy", "sam", "harold" ]);
-    expect(peerStore.get("room").get("users")
-      .toJSON()).toEqual([ "amy", "sam", "harold" ]);
+    expect(getStateA().room.users).toEqual([ "amy", "sam", "harold" ]);
+    expect(getStateB().room.users).toEqual([ "amy", "sam", "harold" ]);
 
-    getState().join("bob");
+    getStateA().join("bob");
 
-    expect(getState().room.users).toEqual([ "amy", "sam", "harold", "bob" ]);
-    expect(peerStore.get("room").get("users")
-      .toJSON()).toEqual([ "amy", "sam", "harold", "bob" ]);
+    expect(getStateA().room.users).toEqual([ "amy", "sam", "harold", "bob" ]);
+    expect(getStateB().room.users).toEqual([ "amy", "sam", "harold", "bob" ]);
   });
 
   it("Updates objects in arrays.", () =>
@@ -370,7 +360,7 @@ describe("Yjs middleware (vanilla)", () =>
 
     const storeName = "store";
 
-    const { getState, } =
+    const { "getState": getStateA, } =
       create<Store>(yjs(
         doc1,
         storeName,
@@ -404,54 +394,59 @@ describe("Yjs middleware (vanilla)", () =>
           })
       ));
 
-    const peerStore = doc2.getMap(storeName);
-
-    expect(getState().users).toEqual([
-      { "name": "alice", "status": "offline", },
-      { "name": "bob", "status": "offline", }
-    ]);
-    expect(peerStore.get("users").toJSON()).toEqual([
-      { "name": "alice", "status": "offline", },
-      { "name": "bob", "status": "offline", }
-    ]);
-
-    getState().setStatus("bob", "online");
-
-    expect(getState().users).toEqual([
-      { "name": "alice", "status": "offline", },
-      { "name": "bob", "status": "online", }
-    ]);
-    expect(peerStore.get("users").toJSON()).toEqual([
-      { "name": "alice", "status": "offline", },
-      { "name": "bob", "status": "online", }
-    ]);
-  });
-
-  it("Does not reset state on join.", () =>
-  {
-    type Store =
-    {
-      count: number,
-      increment: () => void,
-    };
-
-    const doc = new Y.Doc();
-    doc.getMap("hello").set("count", 12);
-
-    const api =
+    const { "getState": getStateB, } =
       create<Store>(yjs(
-        doc,
-        "hello",
+        doc1,
+        storeName,
         (set) =>
           ({
-            "count": 0,
-            "increment": () =>
+            "users": [
+              {
+                "name": "alice",
+                "status": "offline",
+              },
+              {
+                "name": "bob",
+                "status": "offline",
+              }
+            ],
+            "setStatus": (userName, status) =>
+            {
               set((state) =>
-                ({ "count": state.count + 1, })),
+                ({
+                  ...state,
+                  "users": [
+                    ...state.users.filter(({ name, }) =>
+                      name !== userName),
+                    {
+                      "name": userName,
+                      "status": status,
+                    }
+                  ],
+                }));
+            },
           })
       ));
 
-    expect(api.getState().count).toBe(12);
+    expect(getStateA().users).toEqual([
+      { "name": "alice", "status": "offline", },
+      { "name": "bob", "status": "offline", }
+    ]);
+    expect(getStateB().users).toEqual([
+      { "name": "alice", "status": "offline", },
+      { "name": "bob", "status": "offline", }
+    ]);
+
+    getStateA().setStatus("bob", "online");
+
+    expect(getStateA().users).toEqual([
+      { "name": "alice", "status": "offline", },
+      { "name": "bob", "status": "online", }
+    ]);
+    expect(getStateA().users).toEqual([
+      { "name": "alice", "status": "offline", },
+      { "name": "bob", "status": "online", }
+    ]);
   });
 
   describe("When adding consecutive entries into arrays", () =>
@@ -569,5 +564,128 @@ describe("Yjs middleware (vanilla)", () =>
         api.getState().addUser("bob", "offline");
       }).not.toThrow();
     });
+  });
+});
+
+
+describe("Yjs middleware with network provider", () =>
+{
+  // eslint-disable-next-line @typescript-eslint/init-declarations
+  let server: ChildProcess;
+  const port = 1234;
+
+  const waitForProviderToConnect = async (provider: WebsocketProvider) =>
+    new Promise<void>((resolve) =>
+    {
+      (function waitForFoo()
+      {
+        if (provider.wsconnected) return resolve();
+        setTimeout(waitForFoo, 30);
+      })();
+    });
+
+
+  // Startup y-websocket demo server for test.
+  beforeEach(async () =>
+  {
+    server = spawn(
+      "node",
+      [ "./node_modules/y-websocket/bin/server.js" ],
+      {
+        "cwd": path.resolve(__dirname, ".."),
+        "windowsHide": true,
+        "env": {
+          ...process.env,
+          "HOST": "localhost",
+          "PORT": port.toString(),
+        },
+      }
+    );
+
+    // Give the server plenty of time to come online.
+    await new Promise<void>((resolve) =>
+      setTimeout(resolve, 1000));
+  });
+
+  // Kill y-websocket demo server after test has completed.
+  afterEach(() =>
+  {
+    server.kill();
+  });
+
+  it("Does not reset state on second join.", async () =>
+  {
+    const address = `ws://localhost:${port}`;
+    const roomName = "room";
+    const mapName = "shared";
+
+    type State =
+    {
+      count: number,
+      increment: () => void,
+    };
+
+    const doc1 = new Y.Doc();
+    const provider1 = new WebsocketProvider(
+      address,
+      roomName,
+      doc1,
+      {
+        "WebSocketPolyfill": require("ws"),
+      }
+    );
+    const store1 = create<State>(yjs(
+      doc1,
+      mapName,
+      (set) =>
+        ({
+          "count": 0,
+          "increment": () =>
+            set((state) =>
+              ({ "count": state.count + 1, })),
+        })
+    ));
+
+    await waitForProviderToConnect(provider1);
+
+    store1.getState().increment();
+
+    expect(store1.getState().count).toBe(1);
+
+    const doc2 = new Y.Doc();
+    const provider2 = new WebsocketProvider(
+      address,
+      roomName,
+      doc2,
+      {
+        "WebSocketPolyfill": require("ws"),
+      }
+    );
+    const store2 = create<State>(yjs(
+      doc2,
+      mapName,
+      (set) =>
+        ({
+          "count": 0,
+          "increment": () =>
+            set((state) =>
+              ({ "count": state.count + 1, })),
+        })
+    ));
+
+    await waitForProviderToConnect(provider2);
+
+    expect(store1.getState().count).toBe(1);
+    expect(store2.getState().count).toBe(1);
+
+    store1.getState().increment();
+
+    expect(store1.getState().count).toBe(2);
+    expect(store2.getState().count).toBe(2);
+
+    provider1.awareness.destroy();
+    provider1.destroy();
+    provider2.awareness.destroy();
+    provider2.destroy();
   });
 });
