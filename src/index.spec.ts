@@ -1,7 +1,7 @@
 import { spawn, ChildProcess, } from "child_process";
 import path from "path";
 
-import create from "zustand/vanilla";
+import createVanilla from "zustand/vanilla";
 
 import * as Y from "yjs";
 import { WebsocketProvider, } from "y-websocket";
@@ -19,7 +19,7 @@ describe("Yjs middleware", () =>
     };
 
     const { getState, } =
-      create<Store>(yjs(
+      createVanilla<Store>(yjs(
         new Y.Doc(),
         "hello",
         (set) =>
@@ -61,7 +61,7 @@ describe("Yjs middleware", () =>
     const storeName = "store";
 
     const { "getState": getStateA, } =
-      create<Store>(yjs(
+      createVanilla<Store>(yjs(
         doc1,
         storeName,
         (set) =>
@@ -74,7 +74,7 @@ describe("Yjs middleware", () =>
       ));
 
     const { "getState": getStateB, } =
-      create<Store>(yjs(
+      createVanilla<Store>(yjs(
         doc2,
         storeName,
         (set) =>
@@ -120,7 +120,7 @@ describe("Yjs middleware", () =>
     const storeName = "store";
 
     const { "getState": getStateA, } =
-      create<Store>(yjs(
+      createVanilla<Store>(yjs(
         doc1,
         storeName,
         (set) =>
@@ -138,7 +138,7 @@ describe("Yjs middleware", () =>
       ));
 
     const { "getState": getStateB, } =
-      create<Store>(yjs(
+      createVanilla<Store>(yjs(
         doc2,
         storeName,
         (set) =>
@@ -192,7 +192,7 @@ describe("Yjs middleware", () =>
     const storeName = "store";
 
     const { "getState": getStateA, } =
-      create<Store>(yjs(
+      createVanilla<Store>(yjs(
         doc1,
         storeName,
         (set) =>
@@ -217,7 +217,7 @@ describe("Yjs middleware", () =>
           })
       ));
     const { "getState": getStateB, } =
-      create<Store>(yjs(
+      createVanilla<Store>(yjs(
         doc1,
         storeName,
         (set) =>
@@ -276,7 +276,7 @@ describe("Yjs middleware", () =>
     const storeName = "store";
 
     const { "getState": getStateA, } =
-      create<Store>(yjs(
+      createVanilla<Store>(yjs(
         doc1,
         storeName,
         (set) =>
@@ -303,7 +303,7 @@ describe("Yjs middleware", () =>
       ));
 
     const { "getState": getStateB, } =
-      create<Store>(yjs(
+      createVanilla<Store>(yjs(
         doc1,
         storeName,
         (set) =>
@@ -361,7 +361,7 @@ describe("Yjs middleware", () =>
     const storeName = "store";
 
     const { "getState": getStateA, } =
-      create<Store>(yjs(
+      createVanilla<Store>(yjs(
         doc1,
         storeName,
         (set) =>
@@ -395,7 +395,7 @@ describe("Yjs middleware", () =>
       ));
 
     const { "getState": getStateB, } =
-      create<Store>(yjs(
+      createVanilla<Store>(yjs(
         doc1,
         storeName,
         (set) =>
@@ -462,7 +462,7 @@ describe("Yjs middleware", () =>
       const doc = new Y.Doc();
 
       const api =
-        create<Store>(yjs(
+        createVanilla<Store>(yjs(
           doc,
           "hello",
           (set) =>
@@ -499,7 +499,7 @@ describe("Yjs middleware", () =>
       const doc = new Y.Doc();
 
       const api =
-        create<Store>(yjs(
+        createVanilla<Store>(yjs(
           doc,
           "hello",
           (set) =>
@@ -536,7 +536,7 @@ describe("Yjs middleware", () =>
       const doc = new Y.Doc();
 
       const api =
-        create<Store>(yjs(
+        createVanilla<Store>(yjs(
           doc,
           "hello",
           (set) =>
@@ -566,7 +566,6 @@ describe("Yjs middleware", () =>
     });
   });
 });
-
 
 describe("Yjs middleware with network provider", () =>
 {
@@ -634,7 +633,7 @@ describe("Yjs middleware with network provider", () =>
         "WebSocketPolyfill": require("ws"),
       }
     );
-    const store1 = create<State>(yjs(
+    const store1 = createVanilla<State>(yjs(
       doc1,
       mapName,
       (set) =>
@@ -661,7 +660,7 @@ describe("Yjs middleware with network provider", () =>
         "WebSocketPolyfill": require("ws"),
       }
     );
-    const store2 = create<State>(yjs(
+    const store2 = createVanilla<State>(yjs(
       doc2,
       mapName,
       (set) =>

@@ -16,38 +16,52 @@ export const diff = (a: any, b: any): any =>
       }
 
       let finalIndices = 0;
+      let bOffset = 0;
 
-      a.forEach((value, index) =>
+      for (let index = 0; index < a.length; index++)
       {
-        if (b[index] === undefined)
+        const value = a[index];
+
+        const bIndex = index + bOffset;
+
+        if (b[bIndex] === undefined)
           result.push([ "-", value ]);
 
-        else if (value instanceof Object && b[index] instanceof Object)
+        else if (value instanceof Object && b[bIndex] instanceof Object)
         {
-          const currentDiff = diff(value, b[index]);
-          const nextDiff = diff(value, b[index+1]);
+          const currentDiff = diff(value, b[bIndex]);
+          const nextDiff = diff(value, b[bIndex+1]);
 
           if (currentDiff !== undefined && nextDiff === undefined)
-            result.push([ "+", b[index] ], [ " ", value ]);
+          {
+            result.push([ "+", b[bIndex] ], [ " ", value ]);
+            finalIndices += 2;
+            bOffset++;
+          }
 
           else if (currentDiff !== undefined)
+          {
             result.push([ "~", currentDiff ]);
+            finalIndices++;
+          }
 
           else
+          {
             result.push([ " ", value ]);
-
-          finalIndices++;
+            finalIndices++;
+          }
         }
 
-        else if (value !== b[index] && value === b[index+1])
+        else if (value !== b[bIndex] && value === b[bIndex+1])
         {
-          result.push([ "+", b[index] ], [ " ", value ]);
+          result.push([ "+", b[bIndex] ], [ " ", value ]);
           finalIndices += 2;
+          bOffset++;
         }
 
-        else if (value !== b[index] && value !== b[index+1])
+        else if (value !== b[bIndex] && value !== b[bIndex+1])
         {
-          result.push([ "-", value ], [ "+", b[index] ]);
+          result.push([ "-", value ], [ "+", b[bIndex] ]);
           finalIndices++;
         }
 
@@ -56,8 +70,7 @@ export const diff = (a: any, b: any): any =>
           result.push([ " ", value ]);
           finalIndices++;
         }
-
-      });
+      }
 
       if (finalIndices < b.length)
       {
