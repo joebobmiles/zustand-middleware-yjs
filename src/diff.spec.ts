@@ -152,6 +152,35 @@ describe("diff", () =>
         ]);
       }
     );
+
+    it("Does not duplicate unchanged value if it is last in the array.", () =>
+    {
+      expect(diff(
+        [ 2 ],
+        [ 1, 2 ]
+      ))
+        .toEqual([
+          [ "+", 1 ],
+          [ " ", 2 ]
+        ]);
+    });
+
+    it(
+      "Does not duplicate an unchanged element when a new element is inserted "
+      +"before it.",
+      () =>
+      {
+        expect(diff(
+          [ 1, 2 ],
+          [ 0, 1, 2 ]
+        ))
+          .toEqual([
+            [ "+", 0 ],
+            [ " ", 1 ],
+            [ " ", 2 ]
+          ]);
+      }
+    );
   });
 
   describe("When passed arrays with nested objects", () =>
@@ -207,5 +236,22 @@ describe("diff", () =>
           [ " ", { "foo": 1, } ]
         ]);
     });
+
+    it(
+      "Does not duplicate an unchanged element when a new element is inserted "
+      +"before it.",
+      () =>
+      {
+        expect(diff(
+          [ { "foo": 1, }, { "foo": 2, } ],
+          [ { "foo": 0, }, { "foo": 1, }, { "foo": 2, } ]
+        ))
+          .toEqual([
+            [ "+", { "foo": 0, } ],
+            [ " ", { "foo": 1, } ],
+            [ " ", { "foo": 2, } ]
+          ]);
+      }
+    );
   });
 });
