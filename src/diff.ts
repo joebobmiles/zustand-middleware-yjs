@@ -28,15 +28,22 @@ export const diff = (a: any, b: any): any =>
           const nextDiff = diff(value, b[index+1]);
 
           if (currentDiff !== undefined && nextDiff === undefined)
+          {
             result.push([ "+", b[index] ], [ " ", value ]);
+            finalIndices += 2;
+          }
 
           else if (currentDiff !== undefined)
+          {
             result.push([ "~", currentDiff ]);
+            finalIndices++;
+          }
 
           else
+          {
             result.push([ " ", value ]);
-
-          finalIndices++;
+            finalIndices++;
+          }
         }
 
         else if (value !== b[index] && value === b[index+1])

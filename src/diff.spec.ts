@@ -195,5 +195,17 @@ describe("diff", () =>
           ]);
       }
     );
+
+    it("Does not duplicate existing object if it is last in the array.", () =>
+    {
+      expect(diff(
+        [ { "foo": 1, } ],
+        [ { "foo": 2, }, { "foo": 1, } ]
+      ))
+        .toEqual([
+          [ "+", { "foo": 2, } ],
+          [ " ", { "foo": 1, } ]
+        ]);
+    });
   });
 });
