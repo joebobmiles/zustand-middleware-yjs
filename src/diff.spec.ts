@@ -108,9 +108,14 @@ describe("diff", () =>
 
   describe("When passed arrays of scalar values", () =>
   {
-    it("Returns undefined for arrays with identical contents.", () =>
+    it.each([
+      [ [ 1, 2, 3 ] ],
+      // See GitHub Issue #32
+      [ [ null, null, null ] ],
+      [ [ undefined, undefined, undefined ] ]
+    ])("Returns undefined for arrays with identical contents.", (array) =>
     {
-      expect(diff([ 1, 2, 3 ], [ 1, 2, 3 ])).toBeUndefined();
+      expect(diff(array, array)).toBeUndefined();
     });
 
     it(

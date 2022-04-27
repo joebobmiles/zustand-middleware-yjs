@@ -9,11 +9,20 @@ import {
 
 describe("getChangeList", () =>
 {
-  it(
+  it.each([
+    [ {} ],
+    [ { "foo": 1, } ],
+    [ [ 1 ] ],
+    // See GitHub Issue #32
+    [ { "foo": null, } ],
+    [ { "foo": undefined, } ],
+    [ [ null ] ],
+    [ [ undefined ] ]
+  ])(
     "Should create an empty array for two values that are identical.",
-    () =>
+    (value) =>
     {
-      expect(getChangeList({}, {})).toEqual([]);
+      expect(getChangeList(value, value)).toEqual([]);
     }
   );
 
