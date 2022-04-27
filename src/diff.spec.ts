@@ -14,6 +14,15 @@ describe("diff", () =>
       expect(diff("hello", "hello")).toBeUndefined();
     });
 
+    // See GitHub Issue #32
+    it.each([
+      null,
+      undefined
+    ])("Returns undefined for two null/undefined values.", (nonValue) =>
+    {
+      expect(diff(nonValue, nonValue)).toBeUndefined();
+    });
+
     it(
       "Returns { __old: <old>, __new: <new> } for different values.",
       () =>
@@ -28,9 +37,14 @@ describe("diff", () =>
 
   describe("When passed objects", () =>
   {
-    it("Returns undefined for two objects with identical contents.", () =>
+    it.each([
+      1,
+      // See GitHub Issue #32
+      null,
+      undefined
+    ])("Returns undefined for two objects with identical contents.", (value) =>
     {
-      expect(diff({ "foo": 1, }, { "foo": 1, })).toBeUndefined();
+      expect(diff({ "foo": value, }, { "foo": value, })).toBeUndefined();
     });
 
     it("Returns undefined for two objects with identical hierarchies.", () =>
@@ -94,9 +108,14 @@ describe("diff", () =>
 
   describe("When passed arrays of scalar values", () =>
   {
-    it("Returns undefined for arrays with identical contents.", () =>
+    it.each([
+      [ [ 1, 2, 3 ] ],
+      // See GitHub Issue #32
+      [ [ null, null, null ] ],
+      [ [ undefined, undefined, undefined ] ]
+    ])("Returns undefined for arrays with identical contents.", (array) =>
     {
-      expect(diff([ 1, 2, 3 ], [ 1, 2, 3 ])).toBeUndefined();
+      expect(diff(array, array)).toBeUndefined();
     });
 
     it(

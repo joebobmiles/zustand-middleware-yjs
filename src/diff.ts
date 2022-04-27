@@ -86,7 +86,7 @@ export const diff = (a: any, b: any): any =>
 
       Object.entries(b).forEach(([ property, value ]) =>
       {
-        if (a[property] === undefined)
+        if (!(property in a))
           result[`${property}__added`] = value;
 
         else if (a[property] instanceof Object && value instanceof Object)
@@ -109,7 +109,7 @@ export const diff = (a: any, b: any): any =>
 
       Object.entries(a).forEach(([ property, value ]) =>
       {
-        if (b[property] === undefined)
+        if (!(property in b))
           result[`${property}__deleted`] = value;
       });
 

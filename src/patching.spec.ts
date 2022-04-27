@@ -9,11 +9,20 @@ import {
 
 describe("getChangeList", () =>
 {
-  it(
+  it.each([
+    [ {} ],
+    [ { "foo": 1, } ],
+    [ [ 1 ] ],
+    // See GitHub Issue #32
+    [ { "foo": null, } ],
+    [ { "foo": undefined, } ],
+    [ [ null ] ],
+    [ [ undefined ] ]
+  ])(
     "Should create an empty array for two values that are identical.",
-    () =>
+    (value) =>
     {
-      expect(getChangeList({}, {})).toEqual([]);
+      expect(getChangeList(value, value)).toEqual([]);
     }
   );
 
@@ -95,6 +104,17 @@ describe("getChangeList", () =>
       [ 1, 3 ],
       [ 1, 2 ],
       [ "none", 0, 1 ]
+    ],
+    // See GitHub Issue #32
+    [
+      { "foo": null, "bar": 2, },
+      { "foo": null, "bar": 3, },
+      [ "none", "foo", null ]
+    ],
+    [
+      { "foo": undefined, "bar": 2, },
+      { "foo": undefined, "bar": 3, },
+      [ "none", "foo", undefined ]
     ]
   ])(
     "Should create a 'none' change when a field does not change. (#%#)",
