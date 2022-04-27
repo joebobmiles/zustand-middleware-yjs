@@ -82,7 +82,8 @@ export const getChangeList = (a: any, b: any): Change[] =>
         else if (property.match(/__deleted$/))
           changes.push([ "delete", property.replace(/__deleted$/, ""), undefined ]);
 
-        else if (value.__old !== undefined && value.__new !== undefined)
+        // eslint-disable-next-line max-len
+        else if (value && value.__old !== undefined && value.__new !== undefined)
           changes.push([ "update", property, value.__new ]);
 
         else if (value instanceof Object)
