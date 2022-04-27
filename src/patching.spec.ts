@@ -95,6 +95,17 @@ describe("getChangeList", () =>
       [ 1, 3 ],
       [ 1, 2 ],
       [ "none", 0, 1 ]
+    ],
+    // See GitHub Issue #32
+    [
+      { "foo": null, "bar": 2, },
+      { "foo": null, "bar": 3, },
+      [ "none", "foo", null ]
+    ],
+    [
+      { "foo": undefined, "bar": 2, },
+      { "foo": undefined, "bar": 3, },
+      [ "none", "foo", undefined ]
     ]
   ])(
     "Should create a 'none' change when a field does not change. (#%#)",
