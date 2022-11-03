@@ -53,7 +53,8 @@ const yjs = <S extends State>(
       (partial, replace) =>
       {
         set(partial, replace);
-        patchSharedType(map, get());
+        doc.transact(() =>
+          patchSharedType(map, get()));
       },
       get,
       {
@@ -62,7 +63,8 @@ const yjs = <S extends State>(
         "setState": (partial, replace) =>
         {
           api.setState(partial, replace);
-          patchSharedType(map, api.getState());
+          doc.transact(() =>
+            patchSharedType(map, api.getState()));
         },
       }
     );
