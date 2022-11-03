@@ -6,6 +6,7 @@ const config: Config.InitialOptions =
     ".tsx?": "ts-jest",
   },
   "rootDir": "./src",
+  "testEnvironment": "jsdom",
 };
 
 export default config;
