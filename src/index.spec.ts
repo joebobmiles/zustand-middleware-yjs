@@ -1,12 +1,15 @@
 import { spawn, ChildProcess, } from "child_process";
 import path from "path";
 
+import { act, renderHook, } from "@testing-library/react-hooks";
+
 import createVanilla from "zustand/vanilla";
 
 import * as Y from "yjs";
 import { WebsocketProvider, } from "y-websocket";
 
 import yjs from ".";
+import create from "zustand";
 
 describe("Yjs middleware", () =>
 {
@@ -541,7 +544,7 @@ describe("Yjs middleware", () =>
           "hello",
           (set) =>
             ({
-              "users": [],
+              "users": <{ name: string, status: "online" | "offline" }[]>[],
               "addUser": (name, status) =>
                 set((state) =>
                   ({
@@ -686,5 +689,55 @@ describe("Yjs middleware with network provider", () =>
     provider1.destroy();
     provider2.awareness.destroy();
     provider2.destroy();
+  });
+});
+
+describe("Yjs middleware in React", () =>
+{
+  /**
+   * See Issue 37.
+   */
+  it("Functions in nested objects are not converted to plain objects.", () =>
+  {
+    type Store =
+    {
+      count: number,
+      increment: () => void,
+      someOtherData: any,
+    };
+
+    const doc = new Y.Doc();
+
+    const useStore =
+      create<Store>(yjs(
+        doc,
+        "hello",
+        (set) =>
+          ({
+            "count": 0,
+            "increment": () =>
+              set((state) =>
+                ({ "count": state.count + 1, })),
+            "someOtherData": {
+              "foo": () =>
+                "bar",
+            },
+          })
+      ));
+
+    const { result, } = renderHook(() =>
+      useStore(({ count, increment, someOtherData, }) =>
+        ({
+          "count": count,
+          "increment": increment,
+          "someOtherData": someOtherData,
+        })));
+
+    act(() =>
+    {
+      result.current.increment();
+    });
+
+    expect(typeof result.current.someOtherData.foo).toBe("function");
   });
 });
