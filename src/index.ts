@@ -1,12 +1,25 @@
 import {
-  State,
   StateCreator,
-  SetState,
-  GetState,
-  StoreApi,
+  StoreMutatorIdentifier,
 } from "zustand/vanilla";
 import * as Y from "yjs";
 import { patchSharedType, patchStore, } from "./patching";
+
+type Yjs = <
+  T extends unknown,
+  InMutators extends [StoreMutatorIdentifier, unknown][] = [],
+  OutMutators extends [StoreMutatorIdentifier, unknown][] = []
+>(
+  doc: Y.Doc,
+  name: string,
+  creator: StateCreator<T, InMutators, OutMutators>,
+) => StateCreator<T, InMutators, OutMutators>;
+
+type YjsImpl = <T extends unknown>(
+  doc: Y.Doc,
+  name: string,
+  creator: StateCreator<T, [], []>,
+) => StateCreator<T, [], []>;
 
 /**
  * This function is the middleware the sets up the Zustand store to mirror state
@@ -26,49 +39,17 @@ import { patchSharedType, patchStore, } from "./patching";
  *
  * @param doc The Yjs document to create the store in.
  * @param name The name that the store should be listed under in the doc.
- * @param config The initial state of the store we should be using.
+ * @param creator The initial state of the store we should be using.
  * @returns A Zustand state creator.
  */
-const yjs = <S extends State>(
-  doc: Y.Doc,
-  name: string,
-  config: StateCreator<S>
-): StateCreator<S> =>
+const yjs: YjsImpl = (doc, name, creator) =>
 {
   // The root Y.Map that the store is written and read from.
   const map: Y.Map<any> = doc.getMap(name);
 
   // Augment the store.
-  return (set: SetState<S>, get: GetState<S>, api: StoreApi<S>): S =>
+  return (set, get, store) =>
   {
-    /*
-     * Capture the initial state so that we can initialize the Yjs store to the
-     * same values as the initial values of the Zustand store.
-     */
-    const initialState = config(
-      /*
-       * Create a new set function that defers to the original and then passes
-       * the new state to patchSharedType.
-       */
-      (partial, replace) =>
-      {
-        set(partial, replace);
-        doc.transact(() =>
-          patchSharedType(map, get()));
-      },
-      get,
-      {
-        ...api,
-        // Create a new setState function as we did with set.
-        "setState": (partial, replace) =>
-        {
-          api.setState(partial, replace);
-          doc.transact(() =>
-            patchSharedType(map, api.getState()));
-        },
-      }
-    );
-
     /*
      * Whenever the Yjs store changes, we perform a set operation on the local
      * Zustand store. We avoid using the Yjs enabled set to prevent unnecessary
@@ -76,12 +57,26 @@ const yjs = <S extends State>(
      */
     map.observeDeep(() =>
     {
-      patchStore(api, map.toJSON());
+      patchStore(store, map.toJSON());
     });
 
+    /*
+     * Create a new set function that defers to the original and then passes
+     * the new state to patchSharedType.
+     */
+    const yjsSet: typeof set = (...parameters) =>
+    {
+      set(...parameters);
+      doc.transact(() =>
+        patchSharedType(map, get()));
+    };
+
+    // Configure the store to use the patched setState.
+    store.setState = yjsSet;
+
     // Return the initial state to create or the next middleware.
-    return initialState;
+    return creator(yjsSet, get, store);
   };
 };
 
-export default yjs;
+export default yjs as unknown as Yjs;

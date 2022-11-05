@@ -4,6 +4,8 @@ import path from "path";
 import { act, renderHook, } from "@testing-library/react-hooks";
 
 import createVanilla from "zustand/vanilla";
+import { subscribeWithSelector, } from "zustand/middleware";
+import { immer, } from "zustand/middleware/immer";
 
 import * as Y from "yjs";
 import { WebsocketProvider, } from "y-websocket";
@@ -739,5 +741,186 @@ describe("Yjs middleware in React", () =>
     });
 
     expect(typeof result.current.someOtherData.foo).toBe("function");
+  });
+});
+
+describe("Yjs middleware with other middleware", () =>
+{
+  describe("subscribeWithSelector middleware", () =>
+  {
+    it("Updates Yjs locally", () =>
+    {
+      type Store =
+      {
+        count: number,
+        increment: () => void,
+      };
+
+      const doc = new Y.Doc();
+
+      const api =
+        createVanilla<Store>()(yjs(
+          doc,
+          "hello",
+          subscribeWithSelector((set) =>
+            ({
+              "count": 0,
+              "increment": () =>
+                set((state) =>
+                  ({ "count": state.count + 1, })),
+            }))
+        ));
+
+      expect(api.getState().count).toBe(0);
+
+      api.getState().increment();
+
+      expect(api.getState().count).toBe(1);
+      expect(doc.getMap("hello").get("count")).toBe(1);
+    });
+
+    it("Updates Yjs remotely.", () =>
+    {
+      type State =
+      {
+        count: number,
+        increment: () => void,
+      };
+
+      const doc1 = new Y.Doc();
+      const doc2 = new Y.Doc();
+
+      doc1.on("update", (update: any) =>
+      {
+        Y.applyUpdate(doc2, update);
+      });
+      doc2.on("update", (update: any) =>
+      {
+        Y.applyUpdate(doc1, update);
+      });
+
+      const store1 = createVanilla<State>()(yjs(
+        doc1,
+        "room",
+        subscribeWithSelector((set) =>
+          ({
+            "count": 0,
+            "increment": () =>
+              set((state) =>
+                ({ "count": state.count + 1, })),
+          }))
+      ));
+
+      const store2 = createVanilla<State>()(yjs(
+        doc2,
+        "room",
+        subscribeWithSelector((set) =>
+          ({
+            "count": 0,
+            "increment": () =>
+              set((state) =>
+                ({ "count": state.count + 1, })),
+          }))
+      ));
+
+      store1.getState().increment();
+
+      expect(store1.getState().count).toBe(1);
+      expect(store2.getState().count).toBe(1);
+
+      store1.getState().increment();
+
+      expect(store1.getState().count).toBe(2);
+      expect(store2.getState().count).toBe(2);
+    });
+  });
+
+  describe("immer middleware", () =>
+  {
+    it("Updates Yjs locally", () =>
+    {
+      type Store =
+      {
+        count: number,
+        increment: () => void,
+      };
+
+      const doc = new Y.Doc();
+
+      const api =
+        createVanilla<Store>()(yjs(
+          doc,
+          "hello",
+          immer((set) =>
+            ({
+              "count": 0,
+              "increment": () =>
+                set((state) =>
+                  ({ "count": state.count + 1, })),
+            }))
+        ));
+
+      expect(api.getState().count).toBe(0);
+
+      api.getState().increment();
+
+      expect(api.getState().count).toBe(1);
+      expect(doc.getMap("hello").get("count")).toBe(1);
+    });
+
+    it("Updates Yjs remotely.", () =>
+    {
+      type State =
+      {
+        count: number,
+        increment: () => void,
+      };
+
+      const doc1 = new Y.Doc();
+      const doc2 = new Y.Doc();
+
+      doc1.on("update", (update: any) =>
+      {
+        Y.applyUpdate(doc2, update);
+      });
+      doc2.on("update", (update: any) =>
+      {
+        Y.applyUpdate(doc1, update);
+      });
+
+      const store1 = createVanilla<State>()(yjs(
+        doc1,
+        "room",
+        immer((set) =>
+          ({
+            "count": 0,
+            "increment": () =>
+              set((state) =>
+                ({ "count": state.count + 1, })),
+          }))
+      ));
+
+      const store2 = createVanilla<State>()(yjs(
+        doc2,
+        "room",
+        immer((set) =>
+          ({
+            "count": 0,
+            "increment": () =>
+              set((state) =>
+                ({ "count": state.count + 1, })),
+          }))
+      ));
+
+      store1.getState().increment();
+
+      expect(store1.getState().count).toBe(1);
+      expect(store2.getState().count).toBe(1);
+
+      store1.getState().increment();
+
+      expect(store1.getState().count).toBe(2);
+      expect(store2.getState().count).toBe(2);
+    });
   });
 });

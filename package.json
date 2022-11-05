@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "yjs": "^13.5.11",
-    "zustand": "^3.5.5"
+    "zustand": "^4.1.4"
   },
   "devDependencies": {
     "@commitlint/cli": "^12.1.4",
@@ -67,6 +67,7 @@
     "@types/ws": "^7.4.7",
     "eslint": "^7.30.0",
     "husky": "^7.0.1",
+    "immer": "^9.0.16",
     "jest": "^27.0.6",
     "react-test-renderer": "^17.0.2",
     "rollup": "^2.53.1",
