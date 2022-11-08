@@ -154,6 +154,16 @@ export const diffText = (a: string, b: string): any =>
   }
 };
 
+/**
+ * An implementation of Wu et al. O(NP) text diff. (See docs/text-diff)
+ *
+ * Credit to [this JavaScript implementation](https://github.com/cubicdaiya/onp/blob/master/javascript/onp.js).
+ *
+ * @param a The old string to transform.
+ * @param b The new string to transform to.
+ * @param isReversed Whether or not a or b have been swapped.
+ * @returns A list of changes that that turn a into b.
+ */
 const _diffText = (a: string, b: string, isReversed: boolean): any =>
 {
   const m = a.length, n = b.length;
