@@ -1,4 +1,4 @@
-import { diff, } from "./diff";
+import { diff, diffText, } from "./diff";
 
 describe("diff", () =>
 {
@@ -272,5 +272,27 @@ describe("diff", () =>
           ]);
       }
     );
+  });
+});
+
+describe("diffText", () =>
+{
+  it.each([
+    [ "", "" ],
+    [ "a", "a" ],
+    [ "hello, world!", "hello, world!" ]
+  ])("Returns undefined for identical sequences", (a, b) =>
+  {
+    expect(diffText(a, b)).toBeUndefined();
+  });
+
+  it.each([
+    [ "a", "", [ [ "delete", 0, "a" ] ] ],
+    [ "", "a", [ [ "add", 0, "a" ] ] ],
+    [ "a", "ab", [ [ "add", 1, "b" ] ] ],
+    [ "ab", "ac", [ [ "delete", 1, "b" ], [ "add", 1, "c" ] ] ]
+  ])("Returns a change tuple for sequences that are different", (a, b, diff) =>
+  {
+    expect(diffText(a, b)).toStrictEqual(diff);
   });
 });

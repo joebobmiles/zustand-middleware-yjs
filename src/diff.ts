@@ -126,3 +126,92 @@ export const diff = (a: any, b: any): any =>
   else
     return undefined;
 };
+
+export const diffText = (a: string, b: string): any =>
+{
+  if (a === b)
+    return undefined;
+  else if (a.length === 0)
+  {
+    return [
+      [ "add", 0, b ]
+    ];
+  }
+  else if (b.length === 0)
+  {
+    return [
+      [ "delete", 0, a ]
+    ];
+  }
+  else
+  {
+    const m = a.length, n = b.length;
+    const reverse = m >= n;
+
+    return reverse
+      ? _diffText(b, a, reverse)
+      : _diffText(a, b, reverse);
+  }
+};
+
+const _diffText = (a: string, b: string, isReversed: boolean): any =>
+{
+  const m = a.length, n = b.length;
+  const offset = m;
+  const delta = n - m;
+
+  const frontierPoints: number[] = [];
+  for (let i = 0; i < m + n + 1; i++) frontierPoints[i] = -1;
+
+  const snake = (k: number, y: number) =>
+  {
+    let x = y - k;
+
+    while (x < m && y < n && a[x + 1] === b[y + 1])
+    {
+      x++; y++;
+    }
+
+    return y;
+  };
+
+  let p = -1;
+  do
+  {
+    p++;
+
+    for (let k = -p; k < delta; k++)
+    {
+      frontierPoints[k + offset] = snake(
+        k,
+        Math.max(
+          frontierPoints[k + offset - 1] + 1,
+          frontierPoints[k + offset + 1]
+        )
+      );
+    }
+
+    for (let k = delta + p; k > delta; k--)
+    {
+      frontierPoints[k + offset] = snake(
+        k,
+        Math.max(
+          frontierPoints[k + offset - 1] + 1,
+          frontierPoints[k + offset + 1]
+        )
+      );
+    }
+
+    frontierPoints[delta + offset] = snake(
+      delta,
+      Math.max(
+        frontierPoints[delta + offset - 1] + 1,
+        frontierPoints[delta + offset + 1]
+      )
+    );
+  } while (frontierPoints[delta + offset] !== n);
+
+  return [
+    [ "delete", 0, undefined ]
+  ];
+};
