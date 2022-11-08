@@ -140,7 +140,7 @@ export const diffText = (a: string, b: string): any =>
   else if (b.length === 0)
   {
     return [
-      [ "delete", 0, a ]
+      [ "delete", 0, undefined ]
     ];
   }
   else
@@ -163,14 +163,27 @@ const _diffText = (a: string, b: string, isReversed: boolean): any =>
   const frontierPoints: number[] = [];
   for (let i = 0; i < m + n + 1; i++) frontierPoints[i] = -1;
 
-  const snake = (k: number, y: number) =>
+  const path: number[] = [];
+  for (let i = 0; i < m + n + 1; i++) path[i] = -1;
+
+  const pathPositions: { x: number, y: number, k: number }[] = [];
+
+  const snake = (k: number, p: number, q: number) =>
   {
+    let y = Math.max(p, q);
     let x = y - k;
 
     while (x < m && y < n && a[x + 1] === b[y + 1])
     {
       x++; y++;
     }
+
+    path[k + offset] = pathPositions.length;
+    pathPositions[pathPositions.length] = {
+      "x": x,
+      "y": y,
+      "k": p > q ? path[k + offset - 1] : path[k + offset + 1],
+    };
 
     return y;
   };
@@ -184,10 +197,8 @@ const _diffText = (a: string, b: string, isReversed: boolean): any =>
     {
       frontierPoints[k + offset] = snake(
         k,
-        Math.max(
-          frontierPoints[k + offset - 1] + 1,
-          frontierPoints[k + offset + 1]
-        )
+        frontierPoints[k + offset - 1] + 1,
+        frontierPoints[k + offset + 1]
       );
     }
 
@@ -195,23 +206,64 @@ const _diffText = (a: string, b: string, isReversed: boolean): any =>
     {
       frontierPoints[k + offset] = snake(
         k,
-        Math.max(
-          frontierPoints[k + offset - 1] + 1,
-          frontierPoints[k + offset + 1]
-        )
+        frontierPoints[k + offset - 1] + 1,
+        frontierPoints[k + offset + 1]
       );
     }
 
     frontierPoints[delta + offset] = snake(
       delta,
-      Math.max(
-        frontierPoints[delta + offset - 1] + 1,
-        frontierPoints[delta + offset + 1]
-      )
+      frontierPoints[delta + offset - 1] + 1,
+      frontierPoints[delta + offset + 1]
     );
   } while (frontierPoints[delta + offset] !== n);
 
-  return [
-    [ "delete", 0, undefined ]
-  ];
+  let k = path[delta + offset];
+
+  const editPath: { x: number, y: number }[] = [];
+  while (k !== -1)
+  {
+    editPath[editPath.length] = {
+      "x": pathPositions[k].x,
+      "y": pathPositions[k].y,
+    };
+
+    k = pathPositions[k].k; // eslint-disable-line prefer-destructuring
+  }
+
+  const changeList: [ "add" | "delete", number, string | undefined ][] = [];
+  let x = 0, y = 0;
+
+  for (let i = editPath.length - 1; i >= 0; i--)
+  {
+    while (x <= editPath[i].x || y <= editPath[i].y)
+    {
+      if (editPath[i].y - editPath[i].x > y - x)
+      {
+        changeList[changeList.length] = [
+          isReversed ? "delete" : "add",
+          y,
+          isReversed ? undefined : b[y]
+        ];
+
+        y++;
+      }
+      else if (editPath[i].y - editPath[i].x < y - x)
+      {
+        changeList[changeList.length] = [
+          isReversed ? "add" : "delete",
+          x,
+          isReversed ? a[x] : undefined
+        ];
+
+        x++;
+      }
+      else
+      {
+        x++; y++;
+      }
+    }
+  }
+
+  return changeList;
 };
