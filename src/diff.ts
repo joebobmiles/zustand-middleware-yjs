@@ -184,7 +184,7 @@ const _diffText = (a: string, b: string, isReversed: boolean): any =>
     let y = Math.max(p, q);
     let x = y - k;
 
-    while (x < m && y < n && a[x + 1] === b[y + 1])
+    while (x < m && y < n && a[x] === b[y])
     {
       x++; y++;
     }
@@ -244,6 +244,7 @@ const _diffText = (a: string, b: string, isReversed: boolean): any =>
 
   const changeList: [ "add" | "delete", number, string | undefined ][] = [];
   let x = 0, y = 0;
+  let start = 0;
 
   for (let i = editPath.length - 1; i >= 0; i--)
   {
@@ -251,21 +252,47 @@ const _diffText = (a: string, b: string, isReversed: boolean): any =>
     {
       if (editPath[i].y - editPath[i].x > y - x)
       {
-        changeList[changeList.length] = [
-          isReversed ? "delete" : "add",
-          y,
-          isReversed ? undefined : b[y]
-        ];
+        if (isReversed)
+        {
+          changeList[changeList.length] = [
+            "delete",
+            (y - 1) + start,
+            undefined
+          ];
+        }
+        else
+        {
+          changeList[changeList.length] = [
+            "add",
+            y - 1,
+            b[y - 1]
+          ];
+
+          start++;
+        }
 
         y++;
       }
       else if (editPath[i].y - editPath[i].x < y - x)
       {
-        changeList[changeList.length] = [
-          isReversed ? "add" : "delete",
-          x,
-          isReversed ? a[x] : undefined
-        ];
+        if (isReversed)
+        {
+          changeList[changeList.length] = [
+            "add",
+            x - 1,
+            a[x - 1]
+          ];
+
+          start++;
+        }
+        else
+        {
+          changeList[changeList.length] = [
+            "delete",
+            (x - 1) + start,
+            undefined
+          ];
+        }
 
         x++;
       }

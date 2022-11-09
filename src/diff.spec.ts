@@ -297,4 +297,22 @@ describe("diffText", () =>
   {
     expect(diffText(a, b)).toStrictEqual(diff);
   });
+
+  it("Adjusts indices to account for previous changes.", () =>
+  {
+    const a = "hello", b = "goodbye";
+
+    expect(diffText(a, b)).toStrictEqual([
+      [ "add", 0, "g" ],
+      [ "add", 1, "o" ],
+      [ "add", 2, "o" ],
+      [ "add", 3, "d" ],
+      [ "add", 4, "b" ],
+      [ "add", 5, "y" ],
+      [ "delete", 6, undefined ],
+      [ "delete", 8, undefined ],
+      [ "delete", 9, undefined ],
+      [ "delete", 10, undefined ]
+    ]);
+  });
 });
