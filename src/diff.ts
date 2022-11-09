@@ -169,12 +169,13 @@ const _diffText = (a: string, b: string, isReversed: boolean): any =>
   const m = a.length, n = b.length;
   const offset = m;
   const delta = n - m;
+  const size = m + n + 1;
 
   const frontierPoints: number[] = [];
-  for (let i = 0; i < m + n + 1; i++) frontierPoints[i] = -1;
+  for (let i = 0; i < size; i++) frontierPoints[i] = -1;
 
   const path: number[] = [];
-  for (let i = 0; i < m + n + 1; i++) path[i] = -1;
+  for (let i = 0; i < size; i++) path[i] = -1;
 
   const pathPositions: { x: number, y: number, k: number }[] = [];
 

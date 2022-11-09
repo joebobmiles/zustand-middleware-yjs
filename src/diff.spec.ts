@@ -290,7 +290,9 @@ describe("diffText", () =>
     [ "a", "", [ [ "delete", 0, undefined ] ] ],
     [ "", "a", [ [ "add", 0, "a" ] ] ],
     [ "a", "ab", [ [ "add", 1, "b" ] ] ],
-    [ "ab", "ac", [ [ "delete", 1, undefined ], [ "add", 1, "c" ] ] ]
+    [ "ab", "a", [ [ "delete", 1, undefined ] ] ],
+    [ "ab", "ac", [ [ "delete", 1, undefined ], [ "add", 1, "c" ] ] ],
+    [ "ac", "bc", [ [ "delete", 0, undefined ], [ "add", 0, "b" ] ] ]
   ])("Returns a change tuple for sequences that are different", (a, b, diff) =>
   {
     expect(diffText(a, b)).toStrictEqual(diff);
