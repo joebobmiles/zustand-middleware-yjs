@@ -155,7 +155,7 @@ export const diffText = (a: string, b: string): any =>
 };
 
 /**
- * An implementation of Wu et al. O(NP) text diff. (See docs/text-diff)
+ * An adaptation of Wu et al. O(NP) text diff. (See docs/text-diff)
  *
  * Credit to [this JavaScript implementation](https://github.com/cubicdaiya/onp/blob/master/javascript/onp.js).
  *
@@ -243,8 +243,7 @@ const _diffText = (a: string, b: string, isReversed: boolean): any =>
   }
 
   const changeList: [ "add" | "delete", number, string | undefined ][] = [];
-  let x = 0, y = 0;
-  let start = 0;
+  let x = 0, y = 0, index = -1;
 
   for (let i = editPath.length - 1; i >= 0; i--)
   {
@@ -256,7 +255,7 @@ const _diffText = (a: string, b: string, isReversed: boolean): any =>
         {
           changeList[changeList.length] = [
             "delete",
-            (y - 1) + start,
+            index,
             undefined
           ];
         }
@@ -264,11 +263,11 @@ const _diffText = (a: string, b: string, isReversed: boolean): any =>
         {
           changeList[changeList.length] = [
             "add",
-            y - 1,
+            index,
             b[y - 1]
           ];
 
-          start++;
+          index++;
         }
 
         y++;
@@ -279,17 +278,17 @@ const _diffText = (a: string, b: string, isReversed: boolean): any =>
         {
           changeList[changeList.length] = [
             "add",
-            x - 1,
+            index,
             a[x - 1]
           ];
 
-          start++;
+          index++;
         }
         else
         {
           changeList[changeList.length] = [
             "delete",
-            (x - 1) + start,
+            index,
             undefined
           ];
         }
@@ -298,7 +297,7 @@ const _diffText = (a: string, b: string, isReversed: boolean): any =>
       }
       else
       {
-        x++; y++;
+        x++; y++; index++;
       }
     }
   }

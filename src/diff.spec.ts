@@ -275,7 +275,7 @@ describe("diff", () =>
   });
 });
 
-describe("diffText", () =>
+describe.only("diffText", () =>
 {
   it.each([
     [ "", "" ],
@@ -298,21 +298,43 @@ describe("diffText", () =>
     expect(diffText(a, b)).toStrictEqual(diff);
   });
 
-  it("Adjusts indices to account for previous changes.", () =>
+  it.only.each([
+    [
+      "hello",
+      "goodbye",
+      [
+        [ "add", 0, "g" ],
+        [ "add", 1, "o" ],
+        [ "add", 2, "o" ],
+        [ "add", 3, "d" ],
+        [ "add", 4, "b" ],
+        [ "add", 5, "y" ],
+        [ "delete", 6, undefined ],
+        [ "delete", 7, undefined ],
+        [ "delete", 7, undefined ],
+        [ "delete", 7, undefined ]
+      ]
+    ],
+    [
+      "hello, world!",
+      "goodbye, world.",
+      [
+        [ "add", 0, "g" ],
+        [ "add", 1, "o" ],
+        [ "add", 2, "o" ],
+        [ "add", 3, "d" ],
+        [ "add", 4, "b" ],
+        [ "add", 5, "y" ],
+        [ "delete", 6, undefined ],
+        [ "delete", 7, undefined ],
+        [ "delete", 7, undefined ],
+        [ "delete", 7, undefined ],
+        [ "add", 14, "." ],
+        [ "delete", 15, undefined ]
+      ]
+    ]
+  ])("Adjusts indices to account for previous changes.", (a, b, diff) =>
   {
-    const a = "hello", b = "goodbye";
-
-    expect(diffText(a, b)).toStrictEqual([
-      [ "add", 0, "g" ],
-      [ "add", 1, "o" ],
-      [ "add", 2, "o" ],
-      [ "add", 3, "d" ],
-      [ "add", 4, "b" ],
-      [ "add", 5, "y" ],
-      [ "delete", 6, undefined ],
-      [ "delete", 8, undefined ],
-      [ "delete", 9, undefined ],
-      [ "delete", 10, undefined ]
-    ]);
+    expect(diffText(a, b)).toStrictEqual(diff);
   });
 });
