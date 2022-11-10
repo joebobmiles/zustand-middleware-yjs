@@ -133,15 +133,13 @@ export const diffText = (a: string, b: string): any =>
     return undefined;
   else if (a.length === 0)
   {
-    return [
-      [ "add", 0, b ]
-    ];
+    return b.split("").map((character, index) =>
+      [ "add", index, character ]);
   }
   else if (b.length === 0)
   {
-    return [
-      [ "delete", 0, undefined ]
-    ];
+    return a.split("").map(() =>
+      [ "delete", 0, undefined ]);
   }
   else
   {

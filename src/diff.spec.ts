@@ -275,7 +275,7 @@ describe("diff", () =>
   });
 });
 
-describe.only("diffText", () =>
+describe("diffText", () =>
 {
   it.each([
     [ "", "" ],
@@ -292,13 +292,15 @@ describe.only("diffText", () =>
     [ "a", "ab", [ [ "add", 1, "b" ] ] ],
     [ "ab", "a", [ [ "delete", 1, undefined ] ] ],
     [ "ab", "ac", [ [ "delete", 1, undefined ], [ "add", 1, "c" ] ] ],
-    [ "ac", "bc", [ [ "delete", 0, undefined ], [ "add", 0, "b" ] ] ]
+    [ "ac", "bc", [ [ "delete", 0, undefined ], [ "add", 0, "b" ] ] ],
+    [ "ab", "", [ [ "delete", 0, undefined ], [ "delete", 0, undefined ] ] ],
+    [ "", "ab", [ [ "add", 0, "a" ], [ "add", 1, "b" ] ] ]
   ])("Returns a change tuple for sequences that are different", (a, b, diff) =>
   {
     expect(diffText(a, b)).toStrictEqual(diff);
   });
 
-  it.only.each([
+  it.each([
     [
       "hello",
       "goodbye",
