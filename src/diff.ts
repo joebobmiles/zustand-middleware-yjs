@@ -1,3 +1,9 @@
+/**
+ * Creates an object that describes how to transform a into b.
+ * @param a The old object
+ * @param b The new object
+ * @returns An object that describes the operations that transform a into b.
+ */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export const diff = (a: any, b: any): any =>
 {
@@ -127,6 +133,12 @@ export const diff = (a: any, b: any): any =>
     return undefined;
 };
 
+/**
+ * Creates a list of operations that transform a into b.
+ * @param a The old string
+ * @param b The new string
+ * @returns A diff describing the changes to make a into b.
+ */
 export const diffText = (a: string, b: string): any =>
 {
   if (a === b)
