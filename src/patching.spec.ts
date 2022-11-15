@@ -30,12 +30,12 @@ describe("getChangeList", () =>
     [
       {},
       { "foo": 1, },
-      [ "add", "foo", 1 ]
+      [ "insert", "foo", 1 ]
     ],
     [
       [],
       [ 1 ],
-      [ "add", 0, 1 ]
+      [ "insert", 0, 1 ]
     ]
   ])(
     "Should create an add entry when b contains a new item. (#%#)",
@@ -57,7 +57,7 @@ describe("getChangeList", () =>
       .toContainEqual([ "delete", 0, undefined ]);
 
     expect(getChangeList([ 1 ], [ 2 ]))
-      .toContainEqual([ "add", 0, 2 ]);
+      .toContainEqual([ "insert", 0, 2 ]);
   });
 
   it(

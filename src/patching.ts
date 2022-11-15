@@ -3,11 +3,20 @@ import { diff, } from "./diff";
 import { arrayToYArray, objectToYMap, } from "./mapping";
 import { State, StoreApi, } from "zustand/vanilla";
 
+export enum ChangeType
+{ // eslint-disable-line @typescript-eslint/indent
+  NONE = "none",
+  INSERT = "insert",
+  UPDATE = "update",
+  DELETE = "delete",
+  PENDING = "pending"
+}
+
 /**
  * A record that documents a change to an entry in an array or object.
  */
 export type Change = [
-  "add" | "update" | "delete" | "pending" | "none",
+  ChangeType,
   string | number,
   any
 ];
@@ -40,21 +49,21 @@ export const getChangeList = (a: any, b: any): Change[] =>
         if (0 < changes.length && changes[changes.length-1][0] === "delete")
           offset--;
 
-        changes.push([ "add", index + offset, value ]);
+        changes.push([ ChangeType.INSERT, index + offset, value ]);
 
         break;
 
       case "-":
-        changes.push([ "delete", index + offset, undefined ]);
+        changes.push([ ChangeType.DELETE, index + offset, undefined ]);
         break;
 
       case "~":
-        changes.push([ "pending", index + offset, undefined ]);
+        changes.push([ ChangeType.PENDING, index + offset, undefined ]);
         break;
 
       case " ":
       default:
-        changes.push([ "none", index + offset, value ]);
+        changes.push([ ChangeType.NONE, index + offset, value ]);
         break;
       }
     });
@@ -77,20 +86,20 @@ export const getChangeList = (a: any, b: any): Change[] =>
       .forEach(([ property, value ]) =>
       {
         if (property.match(/__added$/))
-          changes.push([ "add", property.replace(/__added$/, ""), value ]);
+          changes.push([ ChangeType.INSERT, property.replace(/__added$/, ""), value ]);
 
         else if (property.match(/__deleted$/))
-          changes.push([ "delete", property.replace(/__deleted$/, ""), undefined ]);
+          changes.push([ ChangeType.DELETE, property.replace(/__deleted$/, ""), undefined ]);
 
         // eslint-disable-next-line max-len
         else if (value && value.__old !== undefined && value.__new !== undefined)
-          changes.push([ "update", property, value.__new ]);
+          changes.push([ ChangeType.UPDATE, property, value.__new ]);
 
         else if (value instanceof Object)
-          changes.push([ "pending", property, undefined ]);
+          changes.push([ ChangeType.PENDING, property, undefined ]);
 
         else
-          changes.push([ "none", property, value ]);
+          changes.push([ ChangeType.NONE, property, value ]);
       });
   }
 
@@ -118,8 +127,8 @@ export const patchSharedType = (
   {
     switch (type)
     {
-    case "add":
-    case "update":
+    case ChangeType.INSERT:
+    case ChangeType.UPDATE:
       if ((value instanceof Function) === false)
       {
         if (sharedType instanceof Y.Map)
@@ -151,7 +160,7 @@ export const patchSharedType = (
       }
       break;
 
-    case "delete":
+    case ChangeType.DELETE:
       if (sharedType instanceof Y.Map)
         sharedType.delete(property as string);
 
@@ -165,7 +174,7 @@ export const patchSharedType = (
 
       break;
 
-    case "pending":
+    case ChangeType.PENDING:
       if (sharedType instanceof Y.Map)
       {
         patchSharedType(
@@ -216,9 +225,9 @@ export const patchObject = (oldState: any, newState: any): any =>
         {
           switch (type)
           {
-          case "add":
-          case "update":
-          case "none":
+          case ChangeType.INSERT:
+          case ChangeType.UPDATE:
+          case ChangeType.NONE:
           {
             return [
               ...state,
@@ -226,7 +235,7 @@ export const patchObject = (oldState: any, newState: any): any =>
             ];
           }
 
-          case "pending":
+          case ChangeType.PENDING:
           {
             return [
               ...state,
@@ -237,7 +246,7 @@ export const patchObject = (oldState: any, newState: any): any =>
             ];
           }
 
-          case "delete":
+          case ChangeType.DELETE:
           default:
             return state;
           }
@@ -255,9 +264,9 @@ export const patchObject = (oldState: any, newState: any): any =>
       {
         switch (type)
         {
-        case "add":
-        case "update":
-        case "none":
+        case ChangeType.INSERT:
+        case ChangeType.UPDATE:
+        case ChangeType.NONE:
         {
           return {
             ...state,
@@ -265,7 +274,7 @@ export const patchObject = (oldState: any, newState: any): any =>
           };
         }
 
-        case "pending":
+        case ChangeType.PENDING:
         {
           return {
             ...state,
@@ -276,7 +285,7 @@ export const patchObject = (oldState: any, newState: any): any =>
           };
         }
 
-        case "delete":
+        case ChangeType.DELETE:
         default:
           return state;
         }

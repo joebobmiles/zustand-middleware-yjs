@@ -121,6 +121,8 @@ export const diff = (a: any, b: any): any =>
 
       return Object.entries(result).length === 0 ? undefined : result;
     }
+    else if (typeof a === "string" && typeof b === "string")
+      return diffText(a, b);
     else if (a !== b)
     {
       return {
