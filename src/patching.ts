@@ -1,16 +1,8 @@
 import * as Y from "yjs";
+import { ChangeType, } from "./types";
 import { diff, } from "./diff";
 import { arrayToYArray, objectToYMap, } from "./mapping";
 import { State, StoreApi, } from "zustand/vanilla";
-
-export enum ChangeType
-{ // eslint-disable-line @typescript-eslint/indent
-  NONE = "none",
-  INSERT = "insert",
-  UPDATE = "update",
-  DELETE = "delete",
-  PENDING = "pending"
-}
 
 /**
  * A record that documents a change to an entry in an array or object.
