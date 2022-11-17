@@ -1,3 +1,6 @@
+import { ChangeType, Change, } from "./types";
+
+
 /**
  * Creates an object that describes how to transform a into b.
  * @param a The old object
@@ -313,6 +316,132 @@ const _diffText = (a: string, b: string, isReversed: boolean): any =>
       }
     }
   }
+
+  return changeList;
+};
+
+type Diffable = Record<string, any> | Array<any> | string;
+
+const isArray = (d: Diffable): d is Array<any> =>
+  d instanceof Array;
+
+const isString = (d: Diffable): d is string =>
+  typeof d === "string";
+
+const isRecord = (d: Diffable): d is Record<string, any> =>
+  !isArray(d) && !isString(d);
+
+export const getChanges = (a: Diffable, b: Diffable): Change[] =>
+{
+  if (isString(a) && isString(b))
+    return [];
+  else if (isArray(a) && isArray(b))
+    return getArrayChanges(a, b);
+  else if (isRecord(a) && isRecord(b))
+    return getRecordChanges(a, b);
+  else
+    return [];
+};
+
+const getArrayChanges = (a: Array<any>, b: Array<any>): Change[] =>
+{
+  const changeList: Change[] = [];
+
+  let finalIndices = 0;
+  let bOffset = 0;
+
+  for (let index = 0; index < a.length; index++)
+  {
+    const value = a[index];
+
+    const bIndex = index + bOffset;
+
+    if (b[bIndex] === undefined)
+      changeList.push([ ChangeType.DELETE, index, undefined ]);
+
+    else if (value instanceof Object && b[bIndex] instanceof Object)
+    {
+      const currentDiff = getChanges(value, b[bIndex]);
+      const nextDiff = typeof b[bIndex + 1] === "undefined"
+        ? []
+        : getChanges(value, b[bIndex+1]);
+
+      if (
+        currentDiff.length === 0
+        && (typeof b[bIndex+1] !== "undefined" && nextDiff.length === 0)
+      )
+      {
+        changeList.push([ ChangeType.INSERT, index, b[bIndex] ]);
+        finalIndices += 2;
+        bOffset++;
+      }
+
+      else if (currentDiff.length !== 0)
+      {
+        changeList.push([ ChangeType.PENDING, index, currentDiff ]);
+        finalIndices++;
+      }
+
+      else
+        finalIndices++;
+    }
+
+    else if (value !== b[bIndex] && value === b[bIndex+1])
+    {
+      changeList.push([ ChangeType.INSERT, bIndex, b[bIndex] ]);
+      finalIndices += 2;
+      bOffset++;
+    }
+
+    else if (value !== b[bIndex] && value !== b[bIndex+1])
+    {
+      changeList.push([ ChangeType.UPDATE, bIndex, b[bIndex] ]);
+      finalIndices++;
+    }
+
+    else
+      finalIndices++;
+  }
+
+  if (finalIndices < b.length)
+  {
+    b.slice(a.length).forEach((value, index) =>
+      changeList.push([ ChangeType.INSERT, finalIndices + index, value ]));
+  }
+
+  return changeList;
+};
+
+const getRecordChanges = (
+  a: Record<string, any>,
+  b: Record<string, any>
+): Change[] =>
+{
+  const changeList: Change[] = [];
+
+  Object.entries(a).forEach(([ property ]) =>
+  {
+    if (!(property in b))
+      changeList.push([ ChangeType.DELETE, property, undefined ]);
+  });
+
+  Object.entries(b).forEach(([ property, value ]) =>
+  {
+    if (!(property in a))
+      changeList.push([ ChangeType.INSERT, property, value ]);
+
+    else if (a[property] instanceof Object && value instanceof Object
+    )
+    {
+      const d = getChanges(a[property], value);
+
+      if (d.length !== 0)
+        changeList.push([ ChangeType.PENDING, property, d ]);
+    }
+
+    else if (a[property] !== value)
+      changeList.push([ ChangeType.UPDATE, property, value ]);
+  });
 
   return changeList;
 };

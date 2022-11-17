@@ -1,4 +1,171 @@
-import { diff, diffText, } from "./diff";
+import { ChangeType, } from "./types";
+import { diff, diffText, getChanges, } from "./diff";
+
+describe.only("getChanges", () =>
+{
+  describe("When given objects", () =>
+  {
+    it.each([
+      [ {} ],
+      [ { "foo": 1, } ],
+      [ { "foo": null, } ], // See GitHub Issue #32
+      [ { "foo": undefined, } ], // See GitHub Issue #32
+      [ { "foo": { "bar": 1, }, } ]
+    ])("Returns an empty list for two identical objects.", (a) =>
+    {
+      expect(getChanges(a, a)).toStrictEqual([]);
+    });
+
+    it.each([
+      [
+        {},
+        { "foo": 1, },
+        [
+          [ ChangeType.INSERT, "foo", 1 ]
+        ]
+      ],
+      [
+        { "foo": 1, },
+        {},
+        [
+          [ ChangeType.DELETE, "foo", undefined ]
+        ]
+      ],
+      [
+        { "foo": 1, },
+        { "foo": 2, },
+        [
+          [ ChangeType.UPDATE, "foo", 2 ]
+        ]
+      ],
+      [
+        { "foo": 1, },
+        { "bar": 1, },
+        [
+          [ ChangeType.DELETE, "foo", undefined ],
+          [ ChangeType.INSERT, "bar", 1 ]
+        ]
+      ],
+      [
+        { "foo": 1, "bar": 3, },
+        { "foo": 1, "bar": 2, },
+        [
+          [ ChangeType.UPDATE, "bar", 2 ]
+        ]
+      ]
+    ])("Generates a change list for objects", (a, b, changes) =>
+    {
+      expect(getChanges(a, b)).toStrictEqual(changes);
+    });
+  });
+
+  describe("When given arrays", () =>
+  {
+    it.each([
+      [ [ 1, 2, 3 ] ],
+      [ [ null, null, null ] ], // See GitHub Issue #32
+      [ [ { "foo": 1, } ] ]
+    ])("Returns an empty list for identical arrays", (a) =>
+    {
+      expect(getChanges(a, a)).toStrictEqual([]);
+    });
+
+    it.each([
+      [
+        [ 1, 2, 3 ],
+        [ 1, 2 ],
+        [
+          [ ChangeType.DELETE, 2, undefined ]
+        ]
+      ],
+      [
+        [ 1, 2 ],
+        [ 1, 2, 3 ],
+        [
+          [ ChangeType.INSERT, 2, 3 ]
+        ]
+      ],
+      [
+        [ 1, 3 ],
+        [ 1, 2, 3 ],
+        [
+          [ ChangeType.INSERT, 1, 2 ]
+        ]
+      ],
+      [
+        [ 0, 2, 3 ],
+        [ 1, 2, 3 ],
+        [
+          [ ChangeType.UPDATE, 0, 1 ]
+        ]
+      ],
+      /*
+       * This is an edge case in how we perform change detection.
+       *
+       * In this case, A contains a repeated sequence of digits that is not in
+       * B. This confuses the look ahead, which, in order to detect an update,
+       * looks to the next value in B to see if the value found in A has just
+       * moved.
+       *
+       * When it sees that A's position 1, with a value of 3, is not the same as
+       * B's position 1 (with a value of 2), the look ahead checks to see if
+       * B's position 2 is the same as A's position 1. It is, so the algorithm
+       * assumes that an insertion took place in B.
+       *
+       * This insertion causes an increase in the indexing offset for B. When
+       * that happens, the next iteration is looking at B position 3 (does not
+       * exist) instead of position 3. Because B position 3 does not exist, it
+       * is assumed that the duplicate value was deleted in B.
+       *
+       * As far as I know, there's no way around this. One option is that we
+       * could increase the look ahead. But by doing that, we change the minimum
+       * length of the sequence this happens with. If we added, say, a look
+       * ahead of two positions, we'd eliminate the issue with values repeated
+       * twice, but not for values repeated three times.
+       *
+       * Another option is to retroactively recognize a repeated sequence and
+       * then correct the previous insertion to an update when we try to delete
+       * the end of the sequence. However, this has other issues, such as the
+       * ambiguity about what to do when an update happens at the beginning of
+       * a repeated sequence and a delete happens at the end. That could be
+       * construed as an insert at the beginning and two deletes at the end.
+       *
+       * At the end of the day, a correct transformation is better than a
+       * 'correct' change list.
+       */
+      [
+        [ 1, 3, 3 ],
+        [ 1, 2, 3 ],
+        [
+          [ ChangeType.INSERT, 1, 2 ],
+          [ ChangeType.DELETE, 2, undefined ]
+        ]
+      ],
+      [
+        [ { "foo": 1, } ],
+        [ { "foo": 1, }, { "bar": 2, } ],
+        [ [ ChangeType.INSERT, 1, { "bar": 2, } ] ]
+      ],
+      [
+        [ { "foo": 1, } ],
+        [ { "foo": 2, }, { "foo": 1, } ],
+        [
+          [ ChangeType.INSERT, 0, { "foo": 2, } ]
+        ]
+      ],
+      [
+        [ { "foo": 1, }, { "foo": 2, } ],
+        [ { "foo": 0, }, { "foo": 1, }, { "foo": 2, } ],
+        [
+          [ ChangeType.INSERT, 0, { "foo": 0, } ]
+        ]
+      ]
+    ])("Returns a change list for arrays", (a, b, changes) =>
+    {
+      expect(getChanges(a, b)).toStrictEqual(changes);
+    });
+  });
+});
 
 describe("diff", () =>
 {

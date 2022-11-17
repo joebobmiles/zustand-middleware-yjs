@@ -1,17 +1,8 @@
 import * as Y from "yjs";
-import { ChangeType, } from "./types";
+import { ChangeType, Change, } from "./types";
 import { diff, } from "./diff";
 import { arrayToYArray, objectToYMap, } from "./mapping";
 import { State, StoreApi, } from "zustand/vanilla";
-
-/**
- * A record that documents a change to an entry in an array or object.
- */
-export type Change = [
-  ChangeType,
-  string | number,
-  any
-];
 
 /**
  * Computes a diff between a and b and creates a list of changes that transform
@@ -38,7 +29,7 @@ export const getChangeList = (a: any, b: any): Change[] =>
       switch (type)
       {
       case "+":
-        if (0 < changes.length && changes[changes.length-1][0] === "delete")
+        if (0 < changes.length && changes[changes.length-1][0] === ChangeType.DELETE)
           offset--;
 
         changes.push([ ChangeType.INSERT, index + offset, value ]);
