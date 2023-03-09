@@ -169,157 +169,6 @@ export const diffText = (a: string, b: string): any =>
   }
 };
 
-/**
- * An adaptation of Wu et al. O(NP) text diff. (See docs/text-diff)
- *
- * Credit to [this JavaScript implementation](https://github.com/cubicdaiya/onp/blob/master/javascript/onp.js).
- *
- * @param a The old string to transform.
- * @param b The new string to transform to.
- * @param isReversed Whether or not a or b have been swapped.
- * @returns A list of changes that that turn a into b.
- */
-const _diffText = (a: string, b: string, isReversed: boolean): any =>
-{
-  const m = a.length, n = b.length;
-  const offset = m;
-  const delta = n - m;
-  const size = m + n + 1;
-
-  const frontierPoints: number[] = [];
-  for (let i = 0; i < size; i++) frontierPoints[i] = -1;
-
-  const path: number[] = [];
-  for (let i = 0; i < size; i++) path[i] = -1;
-
-  const pathPositions: { x: number, y: number, k: number }[] = [];
-
-  const snake = (k: number, p: number, q: number) =>
-  {
-    let y = Math.max(p, q);
-    let x = y - k;
-
-    while (x < m && y < n && a[x] === b[y])
-    {
-      x++; y++;
-    }
-
-    path[k + offset] = pathPositions.length;
-    pathPositions[pathPositions.length] = {
-      "x": x,
-      "y": y,
-      "k": p > q ? path[k + offset - 1] : path[k + offset + 1],
-    };
-
-    return y;
-  };
-
-  let p = -1;
-  do
-  {
-    p++;
-
-    for (let k = -p; k < delta; k++)
-    {
-      frontierPoints[k + offset] = snake(
-        k,
-        frontierPoints[k + offset - 1] + 1,
-        frontierPoints[k + offset + 1]
-      );
-    }
-
-    for (let k = delta + p; k > delta; k--)
-    {
-      frontierPoints[k + offset] = snake(
-        k,
-        frontierPoints[k + offset - 1] + 1,
-        frontierPoints[k + offset + 1]
-      );
-    }
-
-    frontierPoints[delta + offset] = snake(
-      delta,
-      frontierPoints[delta + offset - 1] + 1,
-      frontierPoints[delta + offset + 1]
-    );
-  } while (frontierPoints[delta + offset] !== n);
-
-  let k = path[delta + offset];
-
-  const editPath: { x: number, y: number }[] = [];
-  while (k !== -1)
-  {
-    editPath[editPath.length] = {
-      "x": pathPositions[k].x,
-      "y": pathPositions[k].y,
-    };
-
-    k = pathPositions[k].k; // eslint-disable-line prefer-destructuring
-  }
-
-  const changeList: [ "add" | "delete", number, string | undefined ][] = [];
-  let x = 0, y = 0, index = -1;
-
-  for (let i = editPath.length - 1; i >= 0; i--)
-  {
-    while (x <= editPath[i].x || y <= editPath[i].y)
-    {
-      if (editPath[i].y - editPath[i].x > y - x)
-      {
-        if (isReversed)
-        {
-          changeList[changeList.length] = [
-            "delete",
-            index,
-            undefined
-          ];
-        }
-        else
-        {
-          changeList[changeList.length] = [
-            "add",
-            index,
-            b[y - 1]
-          ];
-
-          index++;
-        }
-
-        y++;
-      }
-      else if (editPath[i].y - editPath[i].x < y - x)
-      {
-        if (isReversed)
-        {
-          changeList[changeList.length] = [
-            "add",
-            index,
-            a[x - 1]
-          ];
-
-          index++;
-        }
-        else
-        {
-          changeList[changeList.length] = [
-            "delete",
-            index,
-            undefined
-          ];
-        }
-
-        x++;
-      }
-      else
-      {
-        x++; y++; index++;
-      }
-    }
-  }
-
-  return changeList;
-};
-
 type Diffable = Record<string, any> | Array<any> | string;
 
 const isArray = (d: Diffable): d is Array<any> =>
@@ -334,13 +183,38 @@ const isRecord = (d: Diffable): d is Record<string, any> =>
 export const getChanges = (a: Diffable, b: Diffable): Change[] =>
 {
   if (isString(a) && isString(b))
-    return [];
+    return getStringChanges(a, b);
   else if (isArray(a) && isArray(b))
     return getArrayChanges(a, b);
   else if (isRecord(a) && isRecord(b))
     return getRecordChanges(a, b);
   else
     return [];
+};
+
+const getStringChanges = (a: string, b: string): Change[] =>
+{
+  if (a === b)
+    return [];
+  else if (a.length === 0)
+  {
+    return b.split("").map((character, index) =>
+      [ ChangeType.INSERT, index, character ]);
+  }
+  else if (b.length === 0)
+  {
+    return a.split("").map(() =>
+      [ ChangeType.DELETE, 0, undefined ]);
+  }
+  else
+  {
+    const m = a.length, n = b.length;
+    const reverse = m >= n;
+
+    return reverse
+      ? _diffText(b, a, reverse)
+      : _diffText(a, b, reverse);
+  }
 };
 
 const getArrayChanges = (a: Array<any>, b: Array<any>): Change[] =>
@@ -439,6 +313,157 @@ const getRecordChanges = (
     else if (a[property] !== value)
       changeList.push([ ChangeType.UPDATE, property, value ]);
   });
+
+  return changeList;
+};
+
+/**
+ * An adaptation of Wu et al. O(NP) text diff. (See docs/text-diff)
+ *
+ * Credit to [this JavaScript implementation](https://github.com/cubicdaiya/onp/blob/master/javascript/onp.js).
+ *
+ * @param a The old string to transform.
+ * @param b The new string to transform to.
+ * @param isReversed Whether or not a or b have been swapped.
+ * @returns A list of changes that that turn a into b.
+ */
+const _diffText = (a: string, b: string, isReversed: boolean): Change[] =>
+{
+  const m = a.length, n = b.length;
+  const offset = m;
+  const delta = n - m;
+  const size = m + n + 1;
+
+  const frontierPoints: number[] = [];
+  for (let i = 0; i < size; i++) frontierPoints[i] = -1;
+
+  const path: number[] = [];
+  for (let i = 0; i < size; i++) path[i] = -1;
+
+  const pathPositions: { x: number, y: number, k: number }[] = [];
+
+  const snake = (k: number, p: number, q: number) =>
+  {
+    let y = Math.max(p, q);
+    let x = y - k;
+
+    while (x < m && y < n && a[x] === b[y])
+    {
+      x++; y++;
+    }
+
+    path[k + offset] = pathPositions.length;
+    pathPositions[pathPositions.length] = {
+      "x": x,
+      "y": y,
+      "k": p > q ? path[k + offset - 1] : path[k + offset + 1],
+    };
+
+    return y;
+  };
+
+  let p = -1;
+  do
+  {
+    p++;
+
+    for (let k = -p; k < delta; k++)
+    {
+      frontierPoints[k + offset] = snake(
+        k,
+        frontierPoints[k + offset - 1] + 1,
+        frontierPoints[k + offset + 1]
+      );
+    }
+
+    for (let k = delta + p; k > delta; k--)
+    {
+      frontierPoints[k + offset] = snake(
+        k,
+        frontierPoints[k + offset - 1] + 1,
+        frontierPoints[k + offset + 1]
+      );
+    }
+
+    frontierPoints[delta + offset] = snake(
+      delta,
+      frontierPoints[delta + offset - 1] + 1,
+      frontierPoints[delta + offset + 1]
+    );
+  } while (frontierPoints[delta + offset] !== n);
+
+  let k = path[delta + offset];
+
+  const editPath: { x: number, y: number }[] = [];
+  while (k !== -1)
+  {
+    editPath[editPath.length] = {
+      "x": pathPositions[k].x,
+      "y": pathPositions[k].y,
+    };
+
+    k = pathPositions[k].k; // eslint-disable-line prefer-destructuring
+  }
+
+  const changeList: Change[] = [];
+  let x = 0, y = 0, index = -1;
+
+  for (let i = editPath.length - 1; i >= 0; i--)
+  {
+    while (x <= editPath[i].x || y <= editPath[i].y)
+    {
+      if (editPath[i].y - editPath[i].x > y - x)
+      {
+        if (isReversed)
+        {
+          changeList[changeList.length] = [
+            ChangeType.DELETE,
+            index,
+            undefined
+          ];
+        }
+        else
+        {
+          changeList[changeList.length] = [
+            ChangeType.INSERT,
+            index,
+            b[y - 1]
+          ];
+
+          index++;
+        }
+
+        y++;
+      }
+      else if (editPath[i].y - editPath[i].x < y - x)
+      {
+        if (isReversed)
+        {
+          changeList[changeList.length] = [
+            ChangeType.INSERT,
+            index,
+            a[x - 1]
+          ];
+
+          index++;
+        }
+        else
+        {
+          changeList[changeList.length] = [
+            ChangeType.DELETE,
+            index,
+            undefined
+          ];
+        }
+
+        x++;
+      }
+      else
+      {
+        x++; y++; index++;
+      }
+    }
+  }
 
   return changeList;
 };

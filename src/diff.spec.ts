@@ -192,6 +192,100 @@ describe.only("getChanges", () =>
       expect(getChanges(a, b)).toStrictEqual(changes);
     });
   });
+
+  describe("When given strings", () =>
+  {
+    it.each([
+      [ "", "" ],
+      [ "a", "a" ],
+      [ "hello, world!", "hello, world!" ]
+    ])("Returns undefined for identical sequences", (a, b) =>
+    {
+      expect(getChanges(a, b)).toStrictEqual([]);
+    });
+
+    it.each([
+      [ "a", "", [ [ ChangeType.DELETE, 0, undefined ] ] ],
+      [ "", "a", [ [ ChangeType.INSERT, 0, "a" ] ] ],
+      [ "a", "ab", [ [ ChangeType.INSERT, 1, "b" ] ] ],
+      [ "ab", "a", [ [ ChangeType.DELETE, 1, undefined ] ] ],
+      [
+        "ab",
+        "ac",
+        [
+          [ ChangeType.DELETE, 1, undefined ],
+          [ ChangeType.INSERT, 1, "c" ]
+        ]
+      ],
+      [
+        "ac",
+        "bc",
+        [
+          [ ChangeType.DELETE, 0, undefined ],
+          [ ChangeType.INSERT, 0, "b" ]
+        ]
+      ],
+      [
+        "ab",
+        "",
+        [
+          [ ChangeType.DELETE, 0, undefined ],
+          [ ChangeType.DELETE, 0, undefined ]
+        ]
+      ],
+      [
+        "",
+        "ab",
+        [
+          [ ChangeType.INSERT, 0, "a" ],
+          [ ChangeType.INSERT, 1, "b" ]
+        ]
+      ]
+    ])("Returns a change tuple for sequences that are different", (a, b, diff) =>
+    {
+      expect(getChanges(a, b)).toStrictEqual(diff);
+    });
+
+    it.each([
+      [
+        "hello",
+        "goodbye",
+        [
+          [ ChangeType.INSERT, 0, "g" ],
+          [ ChangeType.INSERT, 1, "o" ],
+          [ ChangeType.INSERT, 2, "o" ],
+          [ ChangeType.INSERT, 3, "d" ],
+          [ ChangeType.INSERT, 4, "b" ],
+          [ ChangeType.INSERT, 5, "y" ],
+          [ ChangeType.DELETE, 6, undefined ],
+          [ ChangeType.DELETE, 7, undefined ],
+          [ ChangeType.DELETE, 7, undefined ],
+          [ ChangeType.DELETE, 7, undefined ]
+        ]
+      ],
+      [
+        "hello, world!",
+        "goodbye, world.",
+        [
+          [ ChangeType.INSERT, 0, "g" ],
+          [ ChangeType.INSERT, 1, "o" ],
+          [ ChangeType.INSERT, 2, "o" ],
+          [ ChangeType.INSERT, 3, "d" ],
+          [ ChangeType.INSERT, 4, "b" ],
+          [ ChangeType.INSERT, 5, "y" ],
+          [ ChangeType.DELETE, 6, undefined ],
+          [ ChangeType.DELETE, 7, undefined ],
+          [ ChangeType.DELETE, 7, undefined ],
+          [ ChangeType.DELETE, 7, undefined ],
+          [ ChangeType.INSERT, 14, "." ],
+          [ ChangeType.DELETE, 15, undefined ]
+        ]
+      ]
+    ])("Adjusts indices to account for previous changes.", (a, b, diff) =>
+    {
+      expect(getChanges(a, b)).toStrictEqual(diff);
+    });
+  });
 });
 
 describe("diff", () =>
