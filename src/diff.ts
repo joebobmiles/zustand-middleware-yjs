@@ -366,10 +366,7 @@ const getArrayChanges = (a: Array<any>, b: Array<any>): Change[] =>
         ? []
         : getChanges(value, b[bIndex+1]);
 
-      if (
-        currentDiff.length === 0
-        && (typeof b[bIndex+1] !== "undefined" && nextDiff.length === 0)
-      )
+      if (typeof b[bIndex+1] !== "undefined" && nextDiff.length === 0)
       {
         changeList.push([ ChangeType.INSERT, index, b[bIndex] ]);
         finalIndices += 2;

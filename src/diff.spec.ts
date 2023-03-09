@@ -159,6 +159,20 @@ describe.only("getChanges", () =>
         [
           [ ChangeType.INSERT, 0, { "foo": 0, } ]
         ]
+      ],
+      [
+        [ { "foo": 1, }, { "foo": 2, } ],
+        [ { "foo": 1, }, { "foo": 1, }, { "foo": 2, } ],
+        [
+          [ ChangeType.INSERT, 0, { "foo": 1, } ]
+        ]
+      ],
+      [
+        [ { "foo": 1, }, { "foo": 2, }, { "foo": 3, } ],
+        [ { "foo": 1, }, { "foo": 2, }, { "foo": 2, }, { "foo": 3, } ],
+        [
+          [ ChangeType.INSERT, 1, { "foo": 2, } ]
+        ]
       ]
     ])("Returns a change list for arrays", (a, b, changes) =>
     {
