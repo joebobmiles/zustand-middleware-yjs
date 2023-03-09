@@ -173,6 +173,19 @@ describe.only("getChanges", () =>
         [
           [ ChangeType.INSERT, 1, { "foo": 2, } ]
         ]
+      ],
+      [
+        [ { "foo": 1, } ],
+        [ { "foo": 0, } ],
+        [
+          [
+            ChangeType.PENDING,
+            0,
+            [
+              [ ChangeType.UPDATE, "foo", 0 ]
+            ]
+          ]
+        ]
       ]
     ])("Returns a change list for arrays", (a, b, changes) =>
     {
