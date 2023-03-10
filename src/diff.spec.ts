@@ -234,6 +234,33 @@ describe.only("getChanges", () =>
             ]
           ]
         ]
+      ],
+      [
+        [ "a" ],
+        [ "" ],
+        [
+          [
+            ChangeType.PENDING,
+            0,
+            [
+              [ ChangeType.DELETE, 0, undefined ]
+            ]
+          ]
+        ]
+      ],
+      [
+        [ "ab" ],
+        [ "bc" ],
+        [
+          [
+            ChangeType.PENDING,
+            0,
+            [
+              [ ChangeType.DELETE, 0, undefined ],
+              [ ChangeType.INSERT, 1, "c" ]
+            ]
+          ]
+        ]
       ]
     ])("Returns a change list for arrays", (a, b, changes) =>
     {

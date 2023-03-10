@@ -243,7 +243,10 @@ const getArrayChanges = (a: Array<any>, b: Array<any>): Change[] =>
     if (b[bIndex] === undefined)
       changeList.push([ ChangeType.DELETE, index, undefined ]);
 
-    else if (value instanceof Object && b[bIndex] instanceof Object)
+    else if (
+      (value instanceof Object && b[bIndex] instanceof Object)
+      || (typeof value === "string" && typeof b[bIndex] === "string")
+    )
     {
       const currentDiff = getChanges(value, b[bIndex]);
       const nextDiff = typeof b[bIndex + 1] === "undefined"
