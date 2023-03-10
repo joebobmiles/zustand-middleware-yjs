@@ -1,93 +1,8 @@
 import * as Y from "yjs";
-import { ChangeType, Change, } from "./types";
-import { diff, } from "./diff";
+import { ChangeType, } from "./types";
+import { getChanges, } from "./diff";
 import { arrayToYArray, objectToYMap, } from "./mapping";
 import { State, StoreApi, } from "zustand/vanilla";
-
-/**
- * Computes a diff between a and b and creates a list of changes that transform
- * a into b. This list of changes are only for the top level of a. Nested
- * changes are denoted by a 'pending' entry, indicating that a change resolver
- * will need to recurse in order to fully transform a into b.
- *
- * @param a The 'old' object to compare to the 'new' object.
- * @param b The 'new' object to compare to the 'old' object.
- * @returns A list of Changes that inform what is different between a and b.
- */
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const getChangeList = (a: any, b: any): Change[] =>
-{
-  const delta = diff(a, b);
-  const changes: Change[] = [];
-
-  if (delta instanceof Array)
-  {
-    let offset = 0;
-
-    delta.forEach(([ type, value ], index) =>
-    {
-      switch (type)
-      {
-      case "+":
-        if (0 < changes.length && changes[changes.length-1][0] === ChangeType.DELETE)
-          offset--;
-
-        changes.push([ ChangeType.INSERT, index + offset, value ]);
-
-        break;
-
-      case "-":
-        changes.push([ ChangeType.DELETE, index + offset, undefined ]);
-        break;
-
-      case "~":
-        changes.push([ ChangeType.PENDING, index + offset, undefined ]);
-        break;
-
-      case " ":
-      default:
-        changes.push([ ChangeType.NONE, index + offset, value ]);
-        break;
-      }
-    });
-  }
-  else if (delta instanceof Object)
-  {
-    Object.entries(a).forEach(([ property, value ]) =>
-    {
-      const deltaDeletesFromA = Object.keys(delta).some((p) =>
-        p === `${property}__deleted`);
-
-      const deltaUpdatesA = Object.keys(delta).some((p) =>
-        p === property);
-
-      if (!deltaDeletesFromA && !deltaUpdatesA)
-        delta[property] = value;
-    });
-
-    (Object.entries({ ...delta, }) as [ string, any ])
-      .forEach(([ property, value ]) =>
-      {
-        if (property.match(/__added$/))
-          changes.push([ ChangeType.INSERT, property.replace(/__added$/, ""), value ]);
-
-        else if (property.match(/__deleted$/))
-          changes.push([ ChangeType.DELETE, property.replace(/__deleted$/, ""), undefined ]);
-
-        // eslint-disable-next-line max-len
-        else if (value && value.__old !== undefined && value.__new !== undefined)
-          changes.push([ ChangeType.UPDATE, property, value.__new ]);
-
-        else if (value instanceof Object)
-          changes.push([ ChangeType.PENDING, property, undefined ]);
-
-        else
-          changes.push([ ChangeType.NONE, property, value ]);
-      });
-  }
-
-  return changes;
-};
 
 /**
  * Diffs sharedType and newState to create a list of changes for transforming
@@ -104,7 +19,7 @@ export const patchSharedType = (
   newState: any
 ): void =>
 {
-  const changes = getChangeList(sharedType.toJSON(), newState);
+  const changes = getChanges(sharedType.toJSON(), newState);
 
   changes.forEach(([ type, property, value ]) =>
   {
@@ -130,7 +45,7 @@ export const patchSharedType = (
         {
           const index = property as number;
 
-          if (type === "update")
+          if (type === ChangeType.UPDATE)
             sharedType.delete(index);
 
           if (value instanceof Array)
@@ -193,7 +108,7 @@ export const patchSharedType = (
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export const patchObject = (oldState: any, newState: any): any =>
 {
-  const changes = getChangeList(oldState, newState);
+  const changes = getChanges(oldState, newState);
 
   if (changes.length === 0)
     return oldState;
