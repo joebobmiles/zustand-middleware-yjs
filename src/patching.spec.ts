@@ -608,4 +608,28 @@ describe("patchStore", () =>
 
     expect(store.getState()).toEqual({ "count": 0, });
   });
+
+  it.each([
+    [ "a", "b" ],
+    [ "a", "" ],
+    [ "ab", "cd" ],
+    [ "ab", "bc" ]
+  ])("Applies changes to strings", (a, b) =>
+  {
+    type State = {
+      "string": string,
+    };
+
+    const store = create<State>(() =>
+      ({
+        "string": a,
+      }));
+
+    patchStore(
+      store,
+      { "string": b, }
+    );
+
+    expect(store.getState()).toEqual({ "string": b, });
+  });
 });

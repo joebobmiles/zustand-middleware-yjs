@@ -115,7 +115,9 @@ export const patchState = (oldState: any, newState: any): any =>
     changes: Change[]
   ): any =>
   {
-    if (state instanceof Array)
+    if (typeof state === "string")
+      return applyChangesToString(state as string, changes);
+    else if (state instanceof Array)
       return applyChangesToArray(state as any[], changes);
     else if (state instanceof Object)
       return applyChangesToObject(state as Record<string, any>, changes);
@@ -198,6 +200,36 @@ export const patchState = (oldState: any, newState: any): any =>
           }
         },
         object as Record<string, any>
+      );
+
+  const applyChangesToString = (string: string, changes: Change[]): any =>
+    changes
+      .reduce(
+        (revisedString, [ type, index, value ]) =>
+        {
+          switch (type)
+          {
+          case ChangeType.INSERT:
+          {
+            const left = revisedString.slice(0, index as number);
+            const right = revisedString.slice(index as number);
+            return left + value + right;
+          }
+
+          case ChangeType.DELETE:
+          {
+            const left = revisedString.slice(0, index as number);
+            const right = revisedString.slice((index as number) + 1);
+            return left + right;
+          }
+
+          default:
+          {
+            return revisedString;
+          }
+          }
+        },
+        string
       );
 
   if (changes.length === 0)
