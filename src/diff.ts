@@ -206,6 +206,16 @@ const getStringChanges = (a: string, b: string): Change[] =>
     return a.split("").map(() =>
       [ ChangeType.DELETE, 0, undefined ]);
   }
+  else if (!hasCommonSubsequence(a, b))
+  {
+    const deletes = a.split("").map<Change>(() =>
+      [ ChangeType.DELETE, 0, undefined ]);
+
+    const inserts = b.split("").map<Change>((character, index) =>
+      [ ChangeType.INSERT, index, character ]);
+
+    return deletes.concat(inserts);
+  }
   else
   {
     const m = a.length, n = b.length;
@@ -315,6 +325,18 @@ const getRecordChanges = (
   });
 
   return changeList;
+};
+
+const hasCommonSubsequence = (a: string, b: string) =>
+{
+  const alphabetOfA = a.split("");
+  const alphabetOfB = b.split("");
+
+  let hasCommonSubsequence = false;
+  for (const c of alphabetOfA)
+    hasCommonSubsequence = hasCommonSubsequence || alphabetOfB.includes(c);
+
+  return hasCommonSubsequence;
 };
 
 /**

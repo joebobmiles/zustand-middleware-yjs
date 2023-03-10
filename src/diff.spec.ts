@@ -1,5 +1,5 @@
 import { ChangeType, } from "./types";
-import { diff, diffText, getChanges, } from "./diff";
+import { getChanges, } from "./diff";
 
 describe.only("getChanges", () =>
 {
@@ -51,6 +51,26 @@ describe.only("getChanges", () =>
         { "foo": 1, "bar": 2, },
         [
           [ ChangeType.UPDATE, "bar", 2 ]
+        ]
+      ],
+      [
+        { "foo": 1, },
+        { "foo": "a", },
+        [
+          [ ChangeType.UPDATE, "foo", "a" ]
+        ]
+      ],
+      [
+        { "foo": "a", },
+        { "foo": "", },
+        [
+          [
+            ChangeType.PENDING,
+            "foo",
+            [
+              [ ChangeType.DELETE, 0, undefined ]
+            ]
+          ]
         ]
       ]
     ])("Generates a change list for objects", (a, b, changes) =>
@@ -240,6 +260,25 @@ describe.only("getChanges", () =>
           [ ChangeType.INSERT, 0, "a" ],
           [ ChangeType.INSERT, 1, "b" ]
         ]
+      ],
+      // No common subsequence test cases.
+      [
+        "a",
+        "b",
+        [
+          [ ChangeType.DELETE, 0, undefined ],
+          [ ChangeType.INSERT, 0, "b" ]
+        ]
+      ],
+      [
+        "ab",
+        "cd",
+        [
+          [ ChangeType.DELETE, 0, undefined ],
+          [ ChangeType.DELETE, 0, undefined ],
+          [ ChangeType.INSERT, 0, "c" ],
+          [ ChangeType.INSERT, 1, "d" ]
+        ]
       ]
     ])("Returns a change tuple for sequences that are different", (a, b, diff) =>
     {
@@ -285,346 +324,5 @@ describe.only("getChanges", () =>
     {
       expect(getChanges(a, b)).toStrictEqual(diff);
     });
-  });
-});
-
-describe("diff", () =>
-{
-  describe("When passed scalar values", () =>
-  {
-    it("Returns undefined for two identical numbers.", () =>
-    {
-      expect(diff(1, 1)).toBeUndefined();
-    });
-
-    it("Returns undefined for two identical strings.", () =>
-    {
-      expect(diff("hello", "hello")).toBeUndefined();
-    });
-
-    // See GitHub Issue #32
-    it.each([
-      null,
-      undefined
-    ])("Returns undefined for two null/undefined values.", (nonValue) =>
-    {
-      expect(diff(nonValue, nonValue)).toBeUndefined();
-    });
-
-    it(
-      "Returns { __old: <old>, __new: <new> } for different values.",
-      () =>
-      {
-        expect(diff(1, 2)).toEqual({
-          "__old": 1,
-          "__new": 2,
-        });
-      }
-    );
-  });
-
-  describe("When passed objects", () =>
-  {
-    it.each([
-      1,
-      // See GitHub Issue #32
-      null,
-      undefined
-    ])("Returns undefined for two objects with identical contents.", (value) =>
-    {
-      expect(diff({ "foo": value, }, { "foo": value, })).toBeUndefined();
-    });
-
-    it("Returns undefined for two objects with identical hierarchies.", () =>
-    {
-      expect(diff(
-        { "foo": { "bar": 1, }, },
-        { "foo": { "bar": 1, }, }
-      )).toBeUndefined();
-    });
-
-    it("Returns { <key>__deleted: <old> } when b is missing <key>.", () =>
-    {
-      expect(diff(
-        { "foo": 1, },
-        { }
-      )).toEqual({
-        "foo__deleted": 1,
-      });
-    });
-
-    it("Returns { <key>__added: <new> } when a is missing <key>.", () =>
-    {
-      expect(diff(
-        { },
-        { "foo": 1, }
-      )).toEqual({
-        "foo__added": 1,
-      });
-    });
-
-    it(
-      "Returns { <key>: { __old: <old>, __new: <new> } } when a and b have "
-      +"different <key> values.",
-      () =>
-      {
-        expect(diff(
-          { "foo": 1, },
-          { "foo": 2, }
-        )).toEqual({
-          "foo": {
-            "__old": 1,
-            "__new": 2,
-          },
-        });
-      }
-    );
-
-    it("Only returns fields that have changed.", () =>
-    {
-      expect(diff(
-        { "foo": 1, "bar": 2, },
-        { "foo": 1, "bar": 3, }
-      )).toEqual({
-        "bar": {
-          "__old": 2,
-          "__new": 3,
-        },
-      });
-    });
-  });
-
-  describe("When passed arrays of scalar values", () =>
-  {
-    it.each([
-      [ [ 1, 2, 3 ] ],
-      // See GitHub Issue #32
-      [ [ null, null, null ] ],
-      [ [ undefined, undefined, undefined ] ]
-    ])("Returns undefined for arrays with identical contents.", (array) =>
-    {
-      expect(diff(array, array)).toBeUndefined();
-    });
-
-    it(
-      "Returns [ ..., [ '-', <removed> ], ... ] when b is missing a value.",
-      () =>
-      {
-        expect(diff([ 1, 2, 3 ], [ 1, 2 ])).toEqual([
-          [ " ", 1 ],
-          [ " ", 2 ],
-          [ "-", 3 ]
-        ]);
-      }
-    );
-
-    it(
-      "Returns [ ..., [ '+', <added> ], ... ] when a is missing a value.",
-      () =>
-      {
-        expect(diff([ 1, 3 ], [ 1, 2, 3 ])).toEqual([
-          [ " ", 1 ],
-          [ "+", 2 ],
-          [ " ", 3 ]
-        ]);
-      }
-    );
-
-    it(
-      "Returns [ ..., [ '-', <removed> ], [ '+', <added> ], ... ] for replaced "
-      +"values.",
-      () =>
-      {
-        expect(diff([ 1 ], [ 2 ])).toEqual([ [ "-", 1 ], [ "+", 2 ] ]);
-      }
-    );
-
-    it("Does not forget additions at the end of b.", () =>
-    {
-      expect(diff([ 1 ], [ 2, 3 ])).toEqual([
-        [ "-", 1 ],
-        [ "+", 2 ],
-        [ "+", 3 ]
-      ]);
-    });
-
-    it(
-      "Returns [ ..., [ '+', <added> ] ] when a is missing a value.",
-      () =>
-      {
-        expect(diff([ 1, 2 ], [ 1, 2, 3 ])).toEqual([
-          [ " ", 1 ],
-          [ " ", 2 ],
-          [ "+", 3 ]
-        ]);
-      }
-    );
-
-    it("Does not duplicate unchanged value if it is last in the array.", () =>
-    {
-      expect(diff(
-        [ 2 ],
-        [ 1, 2 ]
-      ))
-        .toEqual([
-          [ "+", 1 ],
-          [ " ", 2 ]
-        ]);
-    });
-
-    it(
-      "Does not duplicate an unchanged element when a new element is inserted "
-      +"before it.",
-      () =>
-      {
-        expect(diff(
-          [ 1, 2 ],
-          [ 0, 1, 2 ]
-        ))
-          .toEqual([
-            [ "+", 0 ],
-            [ " ", 1 ],
-            [ " ", 2 ]
-          ]);
-      }
-    );
-  });
-
-  describe("When passed arrays with nested objects", () =>
-  {
-    it("Returns undefined for arrays of identical contents.", () =>
-    {
-      expect(diff([ { "foo": 1, } ], [ { "foo": 1, } ])).toBeUndefined();
-    });
-
-    it(
-      "Returns [ ..., [ '-', <removed> ], ... ] when b is missing an item.",
-      () =>
-      {
-        expect(diff([ { "foo": 1, }, { "bar": 2, } ], [ { "foo": 1, } ]))
-          .toEqual([
-            [ " ", { "foo": 1, } ],
-            [ "-", { "bar": 2, } ]
-          ]);
-      }
-    );
-
-    it(
-      "Returns [ ..., [ '+', <added> ], ... ] when a is missing an item.",
-      () =>
-      {
-        expect(diff([ { "foo": 1, } ], [ { "foo": 1, }, { "bar": 2, } ]))
-          .toEqual([
-            [ " ", { "foo": 1, } ],
-            [ "+", { "bar": 2, } ]
-          ]);
-      }
-    );
-
-    it(
-      "Returns [ ..., [ '~', <diff> ], ... ] when the item is modified.",
-      () =>
-      {
-        expect(diff([ { "foo": 1, } ], [ { "foo": 2, } ]))
-          .toEqual([
-            [ "~", { "foo": { "__old": 1, "__new": 2, }, } ]
-          ]);
-      }
-    );
-
-    it("Does not duplicate existing object if it is last in the array.", () =>
-    {
-      expect(diff(
-        [ { "foo": 1, } ],
-        [ { "foo": 2, }, { "foo": 1, } ]
-      ))
-        .toEqual([
-          [ "+", { "foo": 2, } ],
-          [ " ", { "foo": 1, } ]
-        ]);
-    });
-
-    it(
-      "Does not duplicate an unchanged element when a new element is inserted "
-      +"before it.",
-      () =>
-      {
-        expect(diff(
-          [ { "foo": 1, }, { "foo": 2, } ],
-          [ { "foo": 0, }, { "foo": 1, }, { "foo": 2, } ]
-        ))
-          .toEqual([
-            [ "+", { "foo": 0, } ],
-            [ " ", { "foo": 1, } ],
-            [ " ", { "foo": 2, } ]
-          ]);
-      }
-    );
-  });
-});
-
-describe("diffText", () =>
-{
-  it.each([
-    [ "", "" ],
-    [ "a", "a" ],
-    [ "hello, world!", "hello, world!" ]
-  ])("Returns undefined for identical sequences", (a, b) =>
-  {
-    expect(diffText(a, b)).toBeUndefined();
-  });
-
-  it.each([
-    [ "a", "", [ [ "delete", 0, undefined ] ] ],
-    [ "", "a", [ [ "add", 0, "a" ] ] ],
-    [ "a", "ab", [ [ "add", 1, "b" ] ] ],
-    [ "ab", "a", [ [ "delete", 1, undefined ] ] ],
-    [ "ab", "ac", [ [ "delete", 1, undefined ], [ "add", 1, "c" ] ] ],
-    [ "ac", "bc", [ [ "delete", 0, undefined ], [ "add", 0, "b" ] ] ],
-    [ "ab", "", [ [ "delete", 0, undefined ], [ "delete", 0, undefined ] ] ],
-    [ "", "ab", [ [ "add", 0, "a" ], [ "add", 1, "b" ] ] ]
-  ])("Returns a change tuple for sequences that are different", (a, b, diff) =>
-  {
-    expect(diffText(a, b)).toStrictEqual(diff);
-  });
-
-  it.each([
-    [
-      "hello",
-      "goodbye",
-      [
-        [ "add", 0, "g" ],
-        [ "add", 1, "o" ],
-        [ "add", 2, "o" ],
-        [ "add", 3, "d" ],
-        [ "add", 4, "b" ],
-        [ "add", 5, "y" ],
-        [ "delete", 6, undefined ],
-        [ "delete", 7, undefined ],
-        [ "delete", 7, undefined ],
-        [ "delete", 7, undefined ]
-      ]
-    ],
-    [
-      "hello, world!",
-      "goodbye, world.",
-      [
-        [ "add", 0, "g" ],
-        [ "add", 1, "o" ],
-        [ "add", 2, "o" ],
-        [ "add", 3, "d" ],
-        [ "add", 4, "b" ],
-        [ "add", 5, "y" ],
-        [ "delete", 6, undefined ],
-        [ "delete", 7, undefined ],
-        [ "delete", 7, undefined ],
-        [ "delete", 7, undefined ],
-        [ "add", 14, "." ],
-        [ "delete", 15, undefined ]
-      ]
-    ]
-  ])("Adjusts indices to account for previous changes.", (a, b, diff) =>
-  {
-    expect(diffText(a, b)).toStrictEqual(diff);
   });
 });
