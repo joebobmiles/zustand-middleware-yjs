@@ -72,6 +72,34 @@ describe.only("getChanges", () =>
             ]
           ]
         ]
+      ],
+      [
+        { "foo": "a", },
+        { "foo": "b", },
+        [
+          [
+            ChangeType.PENDING,
+            "foo",
+            [
+              [ ChangeType.DELETE, 0, undefined ],
+              [ ChangeType.INSERT, 0, "b" ]
+            ]
+          ]
+        ]
+      ],
+      [
+        { "foo": "ab", },
+        { "foo": "bc", },
+        [
+          [
+            ChangeType.PENDING,
+            "foo",
+            [
+              [ ChangeType.DELETE, 0, undefined ],
+              [ ChangeType.INSERT, 1, "c" ]
+            ]
+          ]
+        ]
       ]
     ])("Generates a change list for objects", (a, b, changes) =>
     {
