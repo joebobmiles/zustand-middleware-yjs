@@ -14,7 +14,7 @@ import { State, StoreApi, } from "zustand/vanilla";
  * @param newState The new state to patch the shared type into.
  */
 export const patchSharedType = (
-  sharedType: Y.Map<any> | Y.Array<any>,
+  sharedType: Y.Map<any> | Y.Array<any> | Y.Text,
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   newState: any
 ): void =>
@@ -55,6 +55,9 @@ export const patchSharedType = (
           else
             sharedType.insert(index, [ value ]);
         }
+
+        else if (sharedType instanceof Y.Text)
+          sharedType.insert(property as number, value);
       }
       break;
 
@@ -69,6 +72,10 @@ export const patchSharedType = (
           ? sharedType.length - 1
           : index);
       }
+
+      else if (sharedType instanceof Y.Text)
+        // A delete operation for text is only ever for a single character.
+        sharedType.delete(property as number, 1);
 
       break;
 

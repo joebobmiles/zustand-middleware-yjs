@@ -271,6 +271,30 @@ describe("patchSharedType", () =>
 
     expect(ymap.get("state").get("foo")).toBe(1);
   });
+
+  it("Applies additions to text", () =>
+  {
+    ymap.set("text", new Y.Text("a"));
+    patchSharedType(ymap.get("text"), "ab");
+
+    expect(ymap.get("text").toString()).toBe("ab");
+  });
+
+  it("Applies deletions to text", () =>
+  {
+    ymap.set("text", new Y.Text("ab"));
+    patchSharedType(ymap.get("text"), "a");
+
+    expect(ymap.get("text").toString()).toBe("a");
+  });
+
+  it("Combines additions and deletions to text", () =>
+  {
+    ymap.set("text", new Y.Text("ab"));
+    patchSharedType(ymap.get("text"), "bc");
+
+    expect(ymap.get("text").toString()).toBe("bc");
+  });
 });
 
 describe("patchStore", () =>
