@@ -171,6 +171,9 @@ export const diffText = (a: string, b: string): any =>
 
 type Diffable = Record<string, any> | Array<any> | string;
 
+const isDiffable = (v: any): v is Diffable =>
+  isArray(v) || isString(v) || v instanceof Object;
+
 const isArray = (d: Diffable): d is Array<any> =>
   d instanceof Array;
 
