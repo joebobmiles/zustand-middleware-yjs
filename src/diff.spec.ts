@@ -157,6 +157,18 @@ describe.only("getChanges", () =>
     {
       expect(getChanges(a, b)).toStrictEqual(changes);
     });
+
+    it("Ignores properties whose values are functions", () =>
+    {
+      const a = {
+        "foo": () =>
+          1,
+      };
+
+      const b = {};
+
+      expect(getChanges(a, b)).toStrictEqual([]);
+    });
   });
 
   describe("When given arrays", () =>

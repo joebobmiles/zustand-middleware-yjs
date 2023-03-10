@@ -134,9 +134,9 @@ const getRecordChanges = (
 {
   const changeList: Change[] = [];
 
-  Object.entries(a).forEach(([ property ]) =>
+  Object.entries(a).forEach(([ property, value ]) =>
   {
-    if (!(property in b))
+    if (!(property in b) && !(value instanceof Function))
       changeList.push([ ChangeType.DELETE, property, undefined ]);
   });
 
