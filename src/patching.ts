@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import { ChangeType, } from "./types";
+import { ChangeType, Change, } from "./types";
 import { getChanges, } from "./diff";
 import { arrayToYArray, objectToYMap, } from "./mapping";
 import { State, StoreApi, } from "zustand/vanilla";
@@ -106,104 +106,105 @@ export const patchSharedType = (
  * @returns The patched oldState, identical to newState.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const patchObject = (oldState: any, newState: any): any =>
+export const patchState = (oldState: any, newState: any): any =>
 {
   const changes = getChanges(oldState, newState);
 
-  if (changes.length === 0)
-    return oldState;
-
-  else if (oldState instanceof Array)
+  const applyChanges = (
+    state: (string | any[] | Record<string, any>),
+    changes: Change[]
+  ): any =>
   {
-    const p: any = changes
+    if (state instanceof Array)
+      return applyChangesToArray(state as any[], changes);
+    else if (state instanceof Object)
+      return applyChangesToObject(state as Record<string, any>, changes);
+  };
+
+  const applyChangesToArray = (array: any[], changes: Change[]): any =>
+    changes
       .sort(([ , indexA ], [ , indexB ]) =>
         Math.sign((indexA as number) - (indexB as number)))
       .reduce(
-        (state, [ type, index, value ]) =>
+        (revisedArray, [ type, index, value ]) =>
+        {
+          switch (type)
+          {
+          case ChangeType.INSERT:
+          {
+            revisedArray.splice(index as number, 0, value);
+            return revisedArray;
+          }
+
+          case ChangeType.UPDATE:
+          {
+            revisedArray[index as number] = value;
+            return revisedArray;
+          }
+
+          case ChangeType.PENDING:
+          {
+            revisedArray[index as number] =
+              applyChanges(array[index as number], value);
+            return revisedArray;
+          }
+
+          case ChangeType.DELETE:
+          {
+            revisedArray.splice(index as number, 1);
+            return revisedArray;
+          }
+
+          case ChangeType.NONE:
+          default:
+            return revisedArray;
+          }
+        },
+        array
+      );
+
+  const applyChangesToObject = (
+    object: Record<string, any>,
+    changes: Change[]
+  ): any =>
+    changes
+      .reduce(
+        (revisedObject, [ type, property, value ]) =>
         {
           switch (type)
           {
           case ChangeType.INSERT:
           case ChangeType.UPDATE:
-          case ChangeType.NONE:
           {
-            return [
-              ...state,
-              value
-            ];
+            revisedObject[property] = value;
+            return revisedObject;
           }
 
           case ChangeType.PENDING:
           {
-            return [
-              ...state,
-              patchObject(
-                oldState[index as number],
-                newState[index as number]
-              )
-            ];
+            revisedObject[property] = applyChanges(object[property], value);
+            return revisedObject;
           }
 
           case ChangeType.DELETE:
+          {
+            delete revisedObject[property];
+            return revisedObject;
+          }
+
+          case ChangeType.NONE:
           default:
-            return state;
+            return revisedObject;
           }
         },
-        [] as any[]
+        object as Record<string, any>
       );
 
-    return p;
-  }
+  if (changes.length === 0)
+    return oldState;
 
-  else if (oldState instanceof Object)
-  {
-    const p: any = changes.reduce(
-      (state, [ type, property, value ]) =>
-      {
-        switch (type)
-        {
-        case ChangeType.INSERT:
-        case ChangeType.UPDATE:
-        case ChangeType.NONE:
-        {
-          return {
-            ...state,
-            [property]: value,
-          };
-        }
-
-        case ChangeType.PENDING:
-        {
-          return {
-            ...state,
-            [property]: patchObject(
-              oldState[property as string],
-              newState[property as string]
-            ),
-          };
-        }
-
-        case ChangeType.DELETE:
-        default:
-          return state;
-        }
-      },
-      {}
-    );
-
-    return {
-      ...Object.entries(oldState).reduce(
-        (o, [ property, value ]) =>
-          (
-            value instanceof Function
-              ? { ...o, [property]: value, }
-              : o
-          ),
-        {}
-      ),
-      ...p,
-    };
-  }
+  else
+    return applyChanges(oldState, changes);
 };
 
 
@@ -221,7 +222,7 @@ export const patchStore = <S extends State>(
 ): void =>
 {
   store.setState(
-    patchObject(store.getState() || {}, newState),
+    patchState(store.getState() || {}, newState),
     true // Replace with the patched state.
   );
 };
