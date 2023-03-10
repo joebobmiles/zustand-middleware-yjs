@@ -311,8 +311,15 @@ const getRecordChanges = (
     if (!(property in a))
       changeList.push([ ChangeType.INSERT, property, value ]);
 
-    else if (a[property] instanceof Object && value instanceof Object
-    )
+    else if (a[property] instanceof Object && value instanceof Object)
+    {
+      const d = getChanges(a[property], value);
+
+      if (d.length !== 0)
+        changeList.push([ ChangeType.PENDING, property, d ]);
+    }
+
+    else if (typeof a[property] === "string" && typeof value === "string")
     {
       const d = getChanges(a[property], value);
 
