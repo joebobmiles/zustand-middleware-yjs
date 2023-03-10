@@ -246,10 +246,7 @@ const getArrayChanges = (a: Array<any>, b: Array<any>): Change[] =>
     if (b[bIndex] === undefined)
       changeList.push([ ChangeType.DELETE, index, undefined ]);
 
-    else if (
-      (value instanceof Object && b[bIndex] instanceof Object)
-      || (typeof value === "string" && typeof b[bIndex] === "string")
-    )
+    else if (isDiffable(value) && isDiffable(b[bIndex]))
     {
       const currentDiff = getChanges(value, b[bIndex]);
       const nextDiff = typeof b[bIndex + 1] === "undefined"
@@ -317,15 +314,7 @@ const getRecordChanges = (
     if (!(property in a))
       changeList.push([ ChangeType.INSERT, property, value ]);
 
-    else if (a[property] instanceof Object && value instanceof Object)
-    {
-      const d = getChanges(a[property], value);
-
-      if (d.length !== 0)
-        changeList.push([ ChangeType.PENDING, property, d ]);
-    }
-
-    else if (typeof a[property] === "string" && typeof value === "string")
+    else if (isDiffable(a[property]) && isDiffable(value))
     {
       const d = getChanges(a[property], value);
 
