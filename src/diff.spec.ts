@@ -100,6 +100,58 @@ describe.only("getChanges", () =>
             ]
           ]
         ]
+      ],
+      [
+        { "foo": [ 1 ], },
+        { "foo": [ 2 ], },
+        [
+          [
+            ChangeType.PENDING,
+            "foo",
+            [
+              [ ChangeType.UPDATE, 0, 2 ]
+            ]
+          ]
+        ]
+      ],
+      [
+        { "foo": [ 1, 2 ], },
+        { "foo": [ 2, 2 ], },
+        [
+          [
+            ChangeType.PENDING,
+            "foo",
+            [
+              [ ChangeType.UPDATE, 0, 2 ]
+            ]
+          ]
+        ]
+      ],
+      [
+        { "foo": [ 1, 2, 2 ], },
+        { "foo": [ 1, 2, 3 ], },
+        [
+          [
+            ChangeType.PENDING,
+            "foo",
+            [
+              [ ChangeType.UPDATE, 2, 3 ]
+            ]
+          ]
+        ]
+      ],
+      [
+        { "foo": [ 1, 2, 2 ], },
+        { "foo": [ 1, 2 ], },
+        [
+          [
+            ChangeType.PENDING,
+            "foo",
+            [
+              [ ChangeType.DELETE, 2, undefined ]
+            ]
+          ]
+        ]
       ]
     ])("Generates a change list for objects", (a, b, changes) =>
     {
