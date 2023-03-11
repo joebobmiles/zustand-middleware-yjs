@@ -10,8 +10,7 @@ import * as Y from "yjs";
  * @example <caption>Nested arrays to nested YArrays.</caption>
  * arrayToYArray([ 1, [ 2, 3 ] ]).get(1).get(0) // => 2
  *
- * @example <caption>Object nested inside array to YMap nested in YArray.
- * </caption>
+ * @example <caption>Object nested inside array to YMap nested in YArray.</caption>
  * arrayToYArray([ { foo: 1 } ]).get(0).get("foo") // => 1
  *
  * @param array The array to transform into a YArray
@@ -58,8 +57,7 @@ export const arrayToYArray = (array: any[]): Y.Array<any> =>
  *
  * yArrayToArray(yarray1) // => [ 1, [ 2, 3 ], 4 ]
  *
- * @example <caption>Nested YMaps in YArrays are converted to objects nested
- * in arrays.</caption>
+ * @example <caption>Nested YMaps in YArrays are converted to objects nested in arrays.</caption>
  * const ydoc = new Y.Doc();
  *
  * const yarray = ydoc.getArray("array");
@@ -86,8 +84,7 @@ export const yArrayToArray = (yarray: Y.Array<any>): any[] =>
  * @example <caption>Nested objects to nested YMaps.</caption>
  * objectToYMap({ foo: { bar: 1 } }).get("foo").get("bar") // => 1
  *
- * @example <caption>Nested arrays in objects to nested YArrays in YMaps.
- * </caption>
+ * @example <caption>Nested arrays in objects to nested YArrays in YMaps. </caption>
  * objectToYMap({ foo: [ 1, 2 ] }).get("foo").get(1) // => 2
  *
  * @param object The object to turn into a YMap shared type.
@@ -134,8 +131,7 @@ export const objectToYMap = (object: any): Y.Map<any> =>
  *
  * yMapToObject(ymap1) // => { foo: { bar: 1 } }
  *
- * @example <caption>Nested arrays in objects are converted to YArrays nested in
- * YMaps.</caption>
+ * @example <caption>Nested arrays in objects are converted to YArrays nested in YMaps.</caption>
  * const ydoc = new Y.Doc();
  *
  * const ymap = ydoc.getMap("map");
@@ -151,3 +147,9 @@ export const objectToYMap = (object: any): Y.Map<any> =>
  */
 export const yMapToObject = (ymap: Y.Map<any>): any =>
   ymap.toJSON();
+
+export const yTextToString = (ytext: Y.Text): string =>
+  ytext.toString();
+
+export const stringToYText = (string: string): Y.Text =>
+  new Y.Text(string);

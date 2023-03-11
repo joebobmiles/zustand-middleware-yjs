@@ -2,8 +2,10 @@ import * as Y from "yjs";
 import {
   arrayToYArray,
   objectToYMap,
+  stringToYText,
   yArrayToArray,
   yMapToObject,
+  yTextToString,
 } from "./mapping";
 
 describe("arrayToYArray", () =>
@@ -221,5 +223,40 @@ describe("objectToYMap and yMapToObject are inverses", () =>
     ymap.set("map", objectToYMap(object));
 
     expect(yMapToObject(ymap.get("map"))).toEqual(object);
+  });
+});
+
+describe("yTextToString", () =>
+{
+  it.each([
+    "hello",
+    "rawr",
+    "goodbye"
+  ])("Returns a string with the same content as the YText.", (string) =>
+  {
+    const ydoc = new Y.Doc();
+    const ytext = ydoc.getText("tmp");
+
+    ytext.insert(0, string);
+
+    expect(yTextToString(ytext)).toEqual(string);
+  });
+});
+
+describe("stringToYText", () =>
+{
+  it.each([
+    "hello",
+    "goodbye",
+    "wrong",
+    "running out of things to type"
+  ])("Returns a YText with the same content as the string", (string) =>
+  {
+    const ydoc = new Y.Doc();
+    const ymap = ydoc.getMap("tmp");
+
+    ymap.set("text", stringToYText(string));
+
+    expect(ymap.get("text").toString()).toEqual(string);
   });
 });
