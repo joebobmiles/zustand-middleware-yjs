@@ -295,6 +295,34 @@ describe("patchSharedType", () =>
 
     expect(ymap.get("text").toString()).toBe("bc");
   });
+
+  it("Converts strings to YText in objects", () =>
+  {
+    ymap.set("state", objectToYMap({ "foo": null, }));
+    patchSharedType(
+      ymap.get("state"),
+      {
+        "foo": "bar",
+      }
+    );
+
+    expect(ymap.get("state").get("foo")).toBeInstanceOf(Y.Text);
+    expect(ymap.get("state").get("foo")
+      .toString()).toBe("bar");
+  });
+
+  it("Converts strings to YText in arrays", () =>
+  {
+    ymap.set("state", arrayToYArray([]));
+    patchSharedType(
+      ymap.get("state"),
+      [ "bar" ]
+    );
+
+    expect(ymap.get("state").get(0)).toBeInstanceOf(Y.Text);
+    expect(ymap.get("state").get(0)
+      .toString()).toBe("bar");
+  });
 });
 
 describe("patchStore", () =>

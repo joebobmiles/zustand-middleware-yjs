@@ -1,7 +1,7 @@
 import * as Y from "yjs";
 import { ChangeType, Change, } from "./types";
 import { getChanges, } from "./diff";
-import { arrayToYArray, objectToYMap, } from "./mapping";
+import { arrayToYArray, objectToYMap, stringToYText, } from "./mapping";
 import { State, StoreApi, } from "zustand/vanilla";
 
 /**
@@ -31,12 +31,12 @@ export const patchSharedType = (
       {
         if (sharedType instanceof Y.Map)
         {
-          if (value instanceof Array)
+          if (typeof value === "string")
+            sharedType.set(property as string, stringToYText(value));
+          else if (value instanceof Array)
             sharedType.set(property as string, arrayToYArray(value));
-
           else if (value instanceof Object)
             sharedType.set(property as string, objectToYMap(value));
-
           else
             sharedType.set(property as string, value);
         }
@@ -48,7 +48,9 @@ export const patchSharedType = (
           if (type === ChangeType.UPDATE)
             sharedType.delete(index);
 
-          if (value instanceof Array)
+          if (typeof value === "string")
+            sharedType.insert(index, [ stringToYText(value) ]);
+          else if (value instanceof Array)
             sharedType.insert(index, [ arrayToYArray(value) ]);
           else if (value instanceof Object)
             sharedType.insert(index, [ objectToYMap(value) ]);
