@@ -1,101 +1,8 @@
 import * as Y from "yjs";
-import { diff, } from "./diff";
-import { arrayToYArray, objectToYMap, } from "./mapping";
+import { ChangeType, Change, } from "./types";
+import { getChanges, } from "./diff";
+import { arrayToYArray, objectToYMap, stringToYText, } from "./mapping";
 import { State, StoreApi, } from "zustand/vanilla";
-
-/**
- * A record that documents a change to an entry in an array or object.
- */
-export type Change = [
-  "add" | "update" | "delete" | "pending" | "none",
-  string | number,
-  any
-];
-
-/**
- * Computes a diff between a and b and creates a list of changes that transform
- * a into b. This list of changes are only for the top level of a. Nested
- * changes are denoted by a 'pending' entry, indicating that a change resolver
- * will need to recurse in order to fully transform a into b.
- *
- * @param a The 'old' object to compare to the 'new' object.
- * @param b The 'new' object to compare to the 'old' object.
- * @returns A list of Changes that inform what is different between a and b.
- */
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const getChangeList = (a: any, b: any): Change[] =>
-{
-  const delta = diff(a, b);
-  const changes: Change[] = [];
-
-  if (delta instanceof Array)
-  {
-    let offset = 0;
-
-    delta.forEach(([ type, value ], index) =>
-    {
-      switch (type)
-      {
-      case "+":
-        if (0 < changes.length && changes[changes.length-1][0] === "delete")
-          offset--;
-
-        changes.push([ "add", index + offset, value ]);
-
-        break;
-
-      case "-":
-        changes.push([ "delete", index + offset, undefined ]);
-        break;
-
-      case "~":
-        changes.push([ "pending", index + offset, undefined ]);
-        break;
-
-      case " ":
-      default:
-        changes.push([ "none", index + offset, value ]);
-        break;
-      }
-    });
-  }
-  else if (delta instanceof Object)
-  {
-    Object.entries(a).forEach(([ property, value ]) =>
-    {
-      const deltaDeletesFromA = Object.keys(delta).some((p) =>
-        p === `${property}__deleted`);
-
-      const deltaUpdatesA = Object.keys(delta).some((p) =>
-        p === property);
-
-      if (!deltaDeletesFromA && !deltaUpdatesA)
-        delta[property] = value;
-    });
-
-    (Object.entries({ ...delta, }) as [ string, any ])
-      .forEach(([ property, value ]) =>
-      {
-        if (property.match(/__added$/))
-          changes.push([ "add", property.replace(/__added$/, ""), value ]);
-
-        else if (property.match(/__deleted$/))
-          changes.push([ "delete", property.replace(/__deleted$/, ""), undefined ]);
-
-        // eslint-disable-next-line max-len
-        else if (value && value.__old !== undefined && value.__new !== undefined)
-          changes.push([ "update", property, value.__new ]);
-
-        else if (value instanceof Object)
-          changes.push([ "pending", property, undefined ]);
-
-        else
-          changes.push([ "none", property, value ]);
-      });
-  }
-
-  return changes;
-};
 
 /**
  * Diffs sharedType and newState to create a list of changes for transforming
@@ -107,29 +14,29 @@ export const getChangeList = (a: any, b: any): Change[] =>
  * @param newState The new state to patch the shared type into.
  */
 export const patchSharedType = (
-  sharedType: Y.Map<any> | Y.Array<any>,
+  sharedType: Y.Map<any> | Y.Array<any> | Y.Text,
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   newState: any
 ): void =>
 {
-  const changes = getChangeList(sharedType.toJSON(), newState);
+  const changes = getChanges(sharedType.toJSON(), newState);
 
   changes.forEach(([ type, property, value ]) =>
   {
     switch (type)
     {
-    case "add":
-    case "update":
+    case ChangeType.INSERT:
+    case ChangeType.UPDATE:
       if ((value instanceof Function) === false)
       {
         if (sharedType instanceof Y.Map)
         {
-          if (value instanceof Array)
+          if (typeof value === "string")
+            sharedType.set(property as string, stringToYText(value));
+          else if (value instanceof Array)
             sharedType.set(property as string, arrayToYArray(value));
-
           else if (value instanceof Object)
             sharedType.set(property as string, objectToYMap(value));
-
           else
             sharedType.set(property as string, value);
         }
@@ -138,20 +45,25 @@ export const patchSharedType = (
         {
           const index = property as number;
 
-          if (type === "update")
+          if (type === ChangeType.UPDATE)
             sharedType.delete(index);
 
-          if (value instanceof Array)
+          if (typeof value === "string")
+            sharedType.insert(index, [ stringToYText(value) ]);
+          else if (value instanceof Array)
             sharedType.insert(index, [ arrayToYArray(value) ]);
           else if (value instanceof Object)
             sharedType.insert(index, [ objectToYMap(value) ]);
           else
             sharedType.insert(index, [ value ]);
         }
+
+        else if (sharedType instanceof Y.Text)
+          sharedType.insert(property as number, value);
       }
       break;
 
-    case "delete":
+    case ChangeType.DELETE:
       if (sharedType instanceof Y.Map)
         sharedType.delete(property as string);
 
@@ -163,9 +75,13 @@ export const patchSharedType = (
           : index);
       }
 
+      else if (sharedType instanceof Y.Text)
+        // A delete operation for text is only ever for a single character.
+        sharedType.delete(property as number, 1);
+
       break;
 
-    case "pending":
+    case ChangeType.PENDING:
       if (sharedType instanceof Y.Map)
       {
         patchSharedType(
@@ -199,104 +115,137 @@ export const patchSharedType = (
  * @returns The patched oldState, identical to newState.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const patchObject = (oldState: any, newState: any): any =>
+export const patchState = (oldState: any, newState: any): any =>
 {
-  const changes = getChangeList(oldState, newState);
+  const changes = getChanges(oldState, newState);
+
+  const applyChanges = (
+    state: (string | any[] | Record<string, any>),
+    changes: Change[]
+  ): any =>
+  {
+    if (typeof state === "string")
+      return applyChangesToString(state as string, changes);
+    else if (state instanceof Array)
+      return applyChangesToArray(state as any[], changes);
+    else if (state instanceof Object)
+      return applyChangesToObject(state as Record<string, any>, changes);
+  };
+
+  const applyChangesToArray = (array: any[], changes: Change[]): any =>
+    changes
+      .sort(([ , indexA ], [ , indexB ]) =>
+        Math.sign((indexA as number) - (indexB as number)))
+      .reduce(
+        (revisedArray, [ type, index, value ]) =>
+        {
+          switch (type)
+          {
+          case ChangeType.INSERT:
+          {
+            revisedArray.splice(index as number, 0, value);
+            return revisedArray;
+          }
+
+          case ChangeType.UPDATE:
+          {
+            revisedArray[index as number] = value;
+            return revisedArray;
+          }
+
+          case ChangeType.PENDING:
+          {
+            revisedArray[index as number] =
+              applyChanges(array[index as number], value);
+            return revisedArray;
+          }
+
+          case ChangeType.DELETE:
+          {
+            revisedArray.splice(index as number, 1);
+            return revisedArray;
+          }
+
+          case ChangeType.NONE:
+          default:
+            return revisedArray;
+          }
+        },
+        array
+      );
+
+  const applyChangesToObject = (
+    object: Record<string, any>,
+    changes: Change[]
+  ): any =>
+    changes
+      .reduce(
+        (revisedObject, [ type, property, value ]) =>
+        {
+          switch (type)
+          {
+          case ChangeType.INSERT:
+          case ChangeType.UPDATE:
+          {
+            revisedObject[property] = value;
+            return revisedObject;
+          }
+
+          case ChangeType.PENDING:
+          {
+            revisedObject[property] = applyChanges(object[property], value);
+            return revisedObject;
+          }
+
+          case ChangeType.DELETE:
+          {
+            delete revisedObject[property];
+            return revisedObject;
+          }
+
+          case ChangeType.NONE:
+          default:
+            return revisedObject;
+          }
+        },
+        object as Record<string, any>
+      );
+
+  const applyChangesToString = (string: string, changes: Change[]): any =>
+    changes
+      .reduce(
+        (revisedString, [ type, index, value ]) =>
+        {
+          switch (type)
+          {
+          case ChangeType.INSERT:
+          {
+            const left = revisedString.slice(0, index as number);
+            const right = revisedString.slice(index as number);
+            return left + value + right;
+          }
+
+          case ChangeType.DELETE:
+          {
+            const left = revisedString.slice(0, index as number);
+            const right = revisedString.slice((index as number) + 1);
+            return left + right;
+          }
+
+          default:
+          {
+            return revisedString;
+          }
+          }
+        },
+        string
+      );
 
   if (changes.length === 0)
     return oldState;
 
-  else if (oldState instanceof Array)
-  {
-    const p: any = changes
-      .sort(([ , indexA ], [ , indexB ]) =>
-        Math.sign((indexA as number) - (indexB as number)))
-      .reduce(
-        (state, [ type, index, value ]) =>
-        {
-          switch (type)
-          {
-          case "add":
-          case "update":
-          case "none":
-          {
-            return [
-              ...state,
-              value
-            ];
-          }
-
-          case "pending":
-          {
-            return [
-              ...state,
-              patchObject(
-                oldState[index as number],
-                newState[index as number]
-              )
-            ];
-          }
-
-          case "delete":
-          default:
-            return state;
-          }
-        },
-        [] as any[]
-      );
-
-    return p;
-  }
-
-  else if (oldState instanceof Object)
-  {
-    const p: any = changes.reduce(
-      (state, [ type, property, value ]) =>
-      {
-        switch (type)
-        {
-        case "add":
-        case "update":
-        case "none":
-        {
-          return {
-            ...state,
-            [property]: value,
-          };
-        }
-
-        case "pending":
-        {
-          return {
-            ...state,
-            [property]: patchObject(
-              oldState[property as string],
-              newState[property as string]
-            ),
-          };
-        }
-
-        case "delete":
-        default:
-          return state;
-        }
-      },
-      {}
-    );
-
-    return {
-      ...Object.entries(oldState).reduce(
-        (o, [ property, value ]) =>
-          (
-            value instanceof Function
-              ? { ...o, [property]: value, }
-              : o
-          ),
-        {}
-      ),
-      ...p,
-    };
-  }
+  else
+    return applyChanges(oldState, changes);
 };
 
 
@@ -314,7 +263,7 @@ export const patchStore = <S extends State>(
 ): void =>
 {
   store.setState(
-    patchObject(store.getState() || {}, newState),
+    patchState(store.getState() || {}, newState),
     true // Replace with the patched state.
   );
 };
