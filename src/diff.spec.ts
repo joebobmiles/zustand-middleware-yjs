@@ -300,6 +300,34 @@ describe.only("getChanges", () =>
         ]
       ],
       [
+        [ { "foo": 1, } ],
+        [ ],
+        [
+          [
+            ChangeType.DELETE,
+            0,
+            undefined
+          ]
+        ]
+      ],
+      [
+        [ { "foo": 1, } ],
+        [ {} ],
+        [
+          [
+            ChangeType.PENDING,
+            0,
+            [
+              [
+                ChangeType.DELETE,
+                "foo",
+                undefined
+              ]
+            ]
+          ]
+        ]
+      ],
+      [
         [ "a" ],
         [ "" ],
         [
