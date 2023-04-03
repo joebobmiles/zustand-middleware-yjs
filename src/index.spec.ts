@@ -568,6 +568,57 @@ describe("Yjs middleware", () =>
       }).not.toThrow();
     });
   });
+
+  // See issue #42
+  describe("When unsetting contents of an object", () =>
+  {
+    it("Does not crash on subsequent update", () =>
+    {
+      type Store =
+      {
+        count: number,
+        columns: Record<string, any>[],
+
+        increment: () => void,
+        setColumns: (object: Record<string, any>) => void,
+        removeColumns: () => void,
+      };
+
+      const doc = new Y.Doc();
+
+      const api =
+        createVanilla<Store>(yjs(
+          doc,
+          "hello",
+          (set) =>
+            ({
+              "count": 0,
+              "columns": [],
+              "increment": () =>
+                set((state) =>
+                  ({
+                    ...state,
+                    "count": state.count + 1,
+                  })),
+              "setColumns": (object: Record<string, any>) =>
+                set({
+                  "columns": [ { "dataObject": [ object ], } ],
+                }),
+              "removeColumns": () =>
+                set({
+                  "columns": [ { "dataObject": undefined, } ],
+                }),
+            })
+        ));
+
+      expect(() =>
+      {
+        api.getState().setColumns({ "foo": "bar", });
+        api.getState().removeColumns();
+        api.getState().increment();
+      }).not.toThrow();
+    });
+  });
 });
 
 describe("Yjs middleware with network provider", () =>
