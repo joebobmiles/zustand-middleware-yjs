@@ -1,4 +1,4 @@
-import { spawn, ChildProcess, } from "node:child_process";
+import { spawn, ChildProcess, } from "child_process";
 import path from "path";
 
 import { act, renderHook, } from "@testing-library/react-hooks";
