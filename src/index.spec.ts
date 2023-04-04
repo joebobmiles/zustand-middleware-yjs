@@ -3,13 +3,13 @@ import path from "path";
 
 import { act, renderHook, } from "@testing-library/react-hooks";
 
-import createVanilla from "zustand/vanilla";
+import { createStore as createVanilla, } from "zustand/vanilla";
+import { create, } from "zustand";
 
 import * as Y from "yjs";
 import { WebsocketProvider, } from "y-websocket";
 
 import yjs from ".";
-import create from "zustand";
 
 describe("Yjs middleware", () =>
 {
