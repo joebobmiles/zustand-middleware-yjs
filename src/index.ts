@@ -1,12 +1,26 @@
 import {
-  State,
   StateCreator,
-  SetState,
-  GetState,
-  StoreApi,
-} from "zustand/vanilla";
+  StoreMutatorIdentifier,
+} from "zustand";
 import * as Y from "yjs";
 import { patchSharedType, patchStore, } from "./patching";
+
+type Yjs = <
+  T extends unknown,
+  Mps extends [StoreMutatorIdentifier, unknown][] = [],
+  Mcs extends [StoreMutatorIdentifier, unknown][] = []
+>(
+  doc: Y.Doc,
+  name: string,
+  f: StateCreator<T, Mps, Mcs>
+) => StateCreator<T, Mps, Mcs>;
+
+type YjsImpl = <T extends unknown>(
+  doc: Y.Doc,
+  name: string,
+  config: StateCreator<T, [], []>
+) => StateCreator<T, [], []>;
+
 
 /**
  * This function is the middleware the sets up the Zustand store to mirror state
@@ -29,7 +43,7 @@ import { patchSharedType, patchStore, } from "./patching";
  * @param config The initial state of the store we should be using.
  * @returns A Zustand state creator.
  */
-const yjs = <S extends State>(
+const yjs: YjsImpl = <S extends unknown>(
   doc: Y.Doc,
   name: string,
   config: StateCreator<S>
@@ -39,7 +53,7 @@ const yjs = <S extends State>(
   const map: Y.Map<any> = doc.getMap(name);
 
   // Augment the store.
-  return (set: SetState<S>, get: GetState<S>, api: StoreApi<S>): S =>
+  return (set, get, api) =>
   {
     /*
      * Capture the initial state so that we can initialize the Yjs store to the
@@ -84,4 +98,4 @@ const yjs = <S extends State>(
   };
 };
 
-export default yjs;
+export default yjs as unknown as Yjs;

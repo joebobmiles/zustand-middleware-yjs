@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import create from "zustand/vanilla";
+import { createStore as create, } from "zustand/vanilla";
 import { arrayToYArray, objectToYMap, } from "./mapping";
 import {
   patchSharedType,

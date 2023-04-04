@@ -3,13 +3,13 @@ import path from "path";
 
 import { act, renderHook, } from "@testing-library/react-hooks";
 
-import createVanilla from "zustand/vanilla";
+import { createStore as createVanilla, } from "zustand/vanilla";
+import { create, } from "zustand";
 
 import * as Y from "yjs";
 import { WebsocketProvider, } from "y-websocket";
 
 import yjs from ".";
-import create from "zustand";
 
 describe("Yjs middleware", () =>
 {
@@ -655,9 +655,15 @@ describe("Yjs middleware with network provider", () =>
       }
     );
 
-    // Give the server plenty of time to come online.
+    // Wait for the server to be ready before running the tests.
     await new Promise<void>((resolve) =>
-      setTimeout(resolve, 1000));
+    {
+      server.stdout?.on("readable", () =>
+      {
+        server.stdout?.removeAllListeners();
+        resolve();
+      });
+    });
   });
 
   // Kill y-websocket demo server after test has completed.

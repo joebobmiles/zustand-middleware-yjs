@@ -16,8 +16,8 @@
   "dependencies": {
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "y-webrtc": "^10.2.0",
-    "yjs": "^13.5.11",
-    "zustand": "^3.5.6"
+    "y-webrtc": "^10.2.5",
+    "yjs": "^13.5.52",
+    "zustand": "^4.3.7"
   }
 }
