@@ -657,7 +657,7 @@ describe("Yjs middleware with network provider", () =>
 
     // Give the server plenty of time to come online.
     await new Promise<void>((resolve) =>
-      setTimeout(resolve, 1000));
+      setTimeout(resolve, 2000));
   });
 
   // Kill y-websocket demo server after test has completed.
