@@ -2,7 +2,7 @@ import * as Y from "yjs";
 import { ChangeType, Change, } from "./types";
 import { getChanges, } from "./diff";
 import { arrayToYArray, objectToYMap, stringToYText, } from "./mapping";
-import { State, StoreApi, } from "zustand/vanilla";
+import { StoreApi, } from "zustand/vanilla";
 
 /**
  * Diffs sharedType and newState to create a list of changes for transforming
