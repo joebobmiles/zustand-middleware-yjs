@@ -256,14 +256,19 @@ export const patchState = (oldState: any, newState: any): any =>
  * @param store The Zustand API that manages the store we want to patch.
  * @param newState The new state that the Zustand store should be patched to.
  */
-export const patchStore = <S extends State>(
+export const patchStore = <S extends unknown>(
   store: StoreApi<S>,
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   newState: any
 ): void =>
 {
+  // Clone the oldState instead of using it directly from store.getState().
+  const oldState = {
+    ...(store.getState() as Record<string, unknown>),
+  };
+
   store.setState(
-    patchState(store.getState() || {}, newState),
+    patchState(oldState, newState),
     true // Replace with the patched state.
   );
 };
