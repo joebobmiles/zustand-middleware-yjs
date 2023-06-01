@@ -797,4 +797,78 @@ describe("Yjs middleware in React", () =>
 
     expect(typeof result.current.someOtherData.foo).toBe("function");
   });
+
+  /**
+   * See Issue 41.
+   */
+  it("Zustand is properly notified of updates from remote peer.", () =>
+  {
+    type Store =
+    {
+      count: number,
+      increment: () => void,
+    };
+
+    const doc1 = new Y.Doc();
+    const doc2 = new Y.Doc();
+
+    doc1.on("update", (update: any) =>
+    {
+      Y.applyUpdate(doc2, update);
+    });
+
+    doc2.on("update", (update: any) =>
+    {
+      Y.applyUpdate(doc1, update);
+    });
+
+    const useStore1 =
+      create<Store>(yjs(
+        doc1,
+        "hello",
+        (set) =>
+          ({
+            "count": 0,
+            "increment": () =>
+              set((state) =>
+                ({ "count": state.count + 1, })),
+          })
+      ));
+
+
+    const useStore2 =
+      create<Store>(yjs(
+        doc2,
+        "hello",
+        (set) =>
+          ({
+            "count": 0,
+            "increment": () =>
+              set((state) =>
+                ({ "count": state.count + 1, })),
+          })
+      ));
+
+    const { "result": result1, } = renderHook(() =>
+      useStore1(({ count, increment, }) =>
+        ({
+          "count": count,
+          "increment": increment,
+        })));
+
+    const { "result": result2, } = renderHook(() =>
+      useStore2(({ count, increment, }) =>
+        ({
+          "count": count,
+          "increment": increment,
+        })));
+
+    act(() =>
+    {
+      result1.current.increment();
+    });
+
+    expect(doc2.getMap("hello").get("count")).toBe(1); // Sanity check
+    expect(result2.current.count).toBe(1); // Actual issue
+  });
 });
