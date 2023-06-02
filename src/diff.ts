@@ -1,128 +1,324 @@
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const diff = (a: any, b: any): any =>
+import { ChangeType, Change, } from "./types";
+
+type Diffable = Record<string, any> | Array<any> | string;
+
+const isDiffable = (v: any): v is Diffable =>
+  isArray(v) || isString(v) || v instanceof Object;
+
+const isArray = (d: Diffable): d is Array<any> =>
+  d instanceof Array;
+
+const isString = (d: Diffable): d is string =>
+  typeof d === "string";
+
+const isRecord = (d: Diffable): d is Record<string, any> =>
+  !isArray(d) && !isString(d);
+
+export const getChanges = (a: Diffable, b: Diffable): Change[] =>
 {
-  if (!Object.is(a, b))
+  if (isString(a) && isString(b))
+    return getStringChanges(a, b);
+  else if (isArray(a) && isArray(b))
+    return getArrayChanges(a, b);
+  else if (isRecord(a) && isRecord(b))
+    return getRecordChanges(a, b);
+  else
+    return [];
+};
+
+const getStringChanges = (a: string, b: string): Change[] =>
+{
+  if (a === b)
+    return [];
+  else if (a.length === 0)
   {
-    if (a instanceof Array && b instanceof Array)
-    {
+    return b.split("").map((character, index) =>
+      [ ChangeType.INSERT, index, character ]);
+  }
+  else if (b.length === 0)
+  {
+    return a.split("").map(() =>
+      [ ChangeType.DELETE, 0, undefined ]);
+  }
+  else if (!hasCommonSubsequence(a, b))
+  {
+    const deletes = a.split("").map<Change>(() =>
+      [ ChangeType.DELETE, 0, undefined ]);
 
-      const result: any[] = [];
+    const inserts = b.split("").map<Change>((character, index) =>
+      [ ChangeType.INSERT, index, character ]);
 
-      if (a.length === b.length)
-      {
-        if (a.every((value, index) =>
-          diff(value, b[index]) === undefined))
-          return undefined;
-      }
-
-      let finalIndices = 0;
-      let bOffset = 0;
-
-      for (let index = 0; index < a.length; index++)
-      {
-        const value = a[index];
-
-        const bIndex = index + bOffset;
-
-        if (b[bIndex] === undefined)
-          result.push([ "-", value ]);
-
-        else if (value instanceof Object && b[bIndex] instanceof Object)
-        {
-          const currentDiff = diff(value, b[bIndex]);
-          const nextDiff = diff(value, b[bIndex+1]);
-
-          if (currentDiff !== undefined && nextDiff === undefined)
-          {
-            result.push([ "+", b[bIndex] ], [ " ", value ]);
-            finalIndices += 2;
-            bOffset++;
-          }
-
-          else if (currentDiff !== undefined)
-          {
-            result.push([ "~", currentDiff ]);
-            finalIndices++;
-          }
-
-          else
-          {
-            result.push([ " ", value ]);
-            finalIndices++;
-          }
-        }
-
-        else if (value !== b[bIndex] && value === b[bIndex+1])
-        {
-          result.push([ "+", b[bIndex] ], [ " ", value ]);
-          finalIndices += 2;
-          bOffset++;
-        }
-
-        else if (value !== b[bIndex] && value !== b[bIndex+1])
-        {
-          result.push([ "-", value ], [ "+", b[bIndex] ]);
-          finalIndices++;
-        }
-
-        else
-        {
-          result.push([ " ", value ]);
-          finalIndices++;
-        }
-      }
-
-      if (finalIndices < b.length)
-      {
-        b.slice(a.length).forEach((value) =>
-          result.push([ "+", value ]));
-      }
-
-      return result;
-    }
-    else if (a instanceof Object && b instanceof Object)
-    {
-      const result: any = {};
-
-      Object.entries(b).forEach(([ property, value ]) =>
-      {
-        if (!(property in a))
-          result[`${property}__added`] = value;
-
-        else if (a[property] instanceof Object && value instanceof Object)
-        {
-          const d = diff(a[property], value);
-
-          if (d !== undefined)
-            result[property] = d;
-        }
-
-        else if (a[property] !== value)
-        {
-          result[property] =
-          {
-            "__old": a[property],
-            "__new": value,
-          };
-        }
-      });
-
-      Object.entries(a).forEach(([ property, value ]) =>
-      {
-        if (!(property in b))
-          result[`${property}__deleted`] = value;
-      });
-
-      return Object.entries(result).length === 0 ? undefined : result;
-    }
-    else if (a !== b)
-    {
-      return {
-        "__old": a,
-        "__new": b,
-      };
-    }
+    return deletes.concat(inserts);
   }
   else
-    return undefined;
+  {
+    const m = a.length, n = b.length;
+    const reverse = m >= n;
+
+    return reverse
+      ? _diffText(b, a, reverse)
+      : _diffText(a, b, reverse);
+  }
+};
+
+const getArrayChanges = (a: Array<any>, b: Array<any>): Change[] =>
+{
+  const changeList: Change[] = [];
+
+  let finalIndices = 0;
+  let bOffset = 0;
+
+  for (let index = 0; index < a.length; index++)
+  {
+    const value = a[index];
+
+    const bIndex = index + bOffset;
+
+    if (b[bIndex] === undefined)
+      changeList.push([ ChangeType.DELETE, index, undefined ]);
+
+    else if (isDiffable(value) && isDiffable(b[bIndex]))
+    {
+      const currentDiff = getChanges(value, b[bIndex]);
+      const nextDiff = typeof b[bIndex + 1] === "undefined"
+        ? []
+        : getChanges(value, b[bIndex+1]);
+
+      if (typeof b[bIndex+1] !== "undefined" && nextDiff.length === 0)
+      {
+        changeList.push([ ChangeType.INSERT, index, b[bIndex] ]);
+        finalIndices += 2;
+        bOffset++;
+      }
+
+      else if (currentDiff.length !== 0)
+      {
+        changeList.push([ ChangeType.PENDING, index, currentDiff ]);
+        finalIndices++;
+      }
+
+      else
+        finalIndices++;
+    }
+
+    else if (value !== b[bIndex] && value === b[bIndex+1])
+    {
+      changeList.push([ ChangeType.INSERT, bIndex, b[bIndex] ]);
+      finalIndices += 2;
+      bOffset++;
+    }
+
+    else if (value !== b[bIndex] && value !== b[bIndex+1])
+    {
+      changeList.push([ ChangeType.UPDATE, bIndex, b[bIndex] ]);
+      finalIndices++;
+    }
+
+    else
+      finalIndices++;
+  }
+
+  if (finalIndices < b.length)
+  {
+    b.slice(a.length).forEach((value, index) =>
+      changeList.push([ ChangeType.INSERT, finalIndices + index, value ]));
+  }
+
+  return changeList;
+};
+
+const getRecordChanges = (
+  a: Record<string, any>,
+  b: Record<string, any>
+): Change[] =>
+{
+  const changeList: Change[] = [];
+
+  Object.entries(a).forEach(([ property, value ]) =>
+  {
+    if (!(property in b) && !(value instanceof Function))
+      changeList.push([ ChangeType.DELETE, property, undefined ]);
+  });
+
+  Object.entries(b).forEach(([ property, value ]) =>
+  {
+    if (!(property in a))
+      changeList.push([ ChangeType.INSERT, property, value ]);
+
+    else if (isDiffable(a[property]) && isDiffable(value))
+    {
+      const d = getChanges(a[property], value);
+
+      if (d.length !== 0)
+        changeList.push([ ChangeType.PENDING, property, d ]);
+    }
+
+    else if (a[property] !== value)
+      changeList.push([ ChangeType.UPDATE, property, value ]);
+  });
+
+  return changeList;
+};
+
+const hasCommonSubsequence = (a: string, b: string) =>
+{
+  const alphabetOfA = a.split("");
+  const alphabetOfB = b.split("");
+
+  let hasCommonSubsequence = false;
+  for (const c of alphabetOfA)
+    hasCommonSubsequence = hasCommonSubsequence || alphabetOfB.includes(c);
+
+  return hasCommonSubsequence;
+};
+
+/**
+ * An adaptation of Wu et al. O(NP) text diff. (See docs/text-diff)
+ *
+ * Credit to [this JavaScript implementation](https://github.com/cubicdaiya/onp/blob/master/javascript/onp.js).
+ *
+ * @param a The old string to transform.
+ * @param b The new string to transform to.
+ * @param isReversed Whether or not a or b have been swapped.
+ * @returns A list of changes that that turn a into b.
+ */
+const _diffText = (a: string, b: string, isReversed: boolean): Change[] =>
+{
+  const m = a.length, n = b.length;
+  const offset = m;
+  const delta = n - m;
+  const size = m + n + 1;
+
+  const frontierPoints: number[] = [];
+  for (let i = 0; i < size; i++) frontierPoints[i] = -1;
+
+  const path: number[] = [];
+  for (let i = 0; i < size; i++) path[i] = -1;
+
+  const pathPositions: { x: number, y: number, k: number }[] = [];
+
+  const snake = (k: number, p: number, q: number) =>
+  {
+    let y = Math.max(p, q);
+    let x = y - k;
+
+    while (x < m && y < n && a[x] === b[y])
+    {
+      x++; y++;
+    }
+
+    path[k + offset] = pathPositions.length;
+    pathPositions[pathPositions.length] = {
+      "x": x,
+      "y": y,
+      "k": p > q ? path[k + offset - 1] : path[k + offset + 1],
+    };
+
+    return y;
+  };
+
+  let p = -1;
+  do
+  {
+    p++;
+
+    for (let k = -p; k < delta; k++)
+    {
+      frontierPoints[k + offset] = snake(
+        k,
+        frontierPoints[k + offset - 1] + 1,
+        frontierPoints[k + offset + 1]
+      );
+    }
+
+    for (let k = delta + p; k > delta; k--)
+    {
+      frontierPoints[k + offset] = snake(
+        k,
+        frontierPoints[k + offset - 1] + 1,
+        frontierPoints[k + offset + 1]
+      );
+    }
+
+    frontierPoints[delta + offset] = snake(
+      delta,
+      frontierPoints[delta + offset - 1] + 1,
+      frontierPoints[delta + offset + 1]
+    );
+  } while (frontierPoints[delta + offset] !== n);
+
+  let k = path[delta + offset];
+
+  const editPath: { x: number, y: number }[] = [];
+  while (k !== -1)
+  {
+    editPath[editPath.length] = {
+      "x": pathPositions[k].x,
+      "y": pathPositions[k].y,
+    };
+
+    k = pathPositions[k].k; // eslint-disable-line prefer-destructuring
+  }
+
+  const changeList: Change[] = [];
+  let x = 0, y = 0, index = -1;
+
+  for (let i = editPath.length - 1; i >= 0; i--)
+  {
+    while (x <= editPath[i].x || y <= editPath[i].y)
+    {
+      if (editPath[i].y - editPath[i].x > y - x)
+      {
+        if (isReversed)
+        {
+          changeList[changeList.length] = [
+            ChangeType.DELETE,
+            index,
+            undefined
+          ];
+        }
+        else
+        {
+          changeList[changeList.length] = [
+            ChangeType.INSERT,
+            index,
+            b[y - 1]
+          ];
+
+          index++;
+        }
+
+        y++;
+      }
+      else if (editPath[i].y - editPath[i].x < y - x)
+      {
+        if (isReversed)
+        {
+          changeList[changeList.length] = [
+            ChangeType.INSERT,
+            index,
+            a[x - 1]
+          ];
+
+          index++;
+        }
+        else
+        {
+          changeList[changeList.length] = [
+            ChangeType.DELETE,
+            index,
+            undefined
+          ];
+        }
+
+        x++;
+      }
+      else
+      {
+        x++; y++; index++;
+      }
+    }
+  }
+
+  return changeList;
 };

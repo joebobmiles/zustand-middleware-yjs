@@ -3,13 +3,13 @@ import path from "path";
 
 import { act, renderHook, } from "@testing-library/react-hooks";
 
-import createVanilla from "zustand/vanilla";
+import { createStore as createVanilla, } from "zustand/vanilla";
+import { create, } from "zustand";
 
 import * as Y from "yjs";
 import { WebsocketProvider, } from "y-websocket";
 
 import yjs from ".";
-import create from "zustand";
 
 describe("Yjs middleware", () =>
 {
@@ -568,6 +568,57 @@ describe("Yjs middleware", () =>
       }).not.toThrow();
     });
   });
+
+  // See issue #42
+  describe("When unsetting contents of an object", () =>
+  {
+    it("Does not crash on subsequent update", () =>
+    {
+      type Store =
+      {
+        count: number,
+        columns: Record<string, any>[],
+
+        increment: () => void,
+        setColumns: (object: Record<string, any>) => void,
+        removeColumns: () => void,
+      };
+
+      const doc = new Y.Doc();
+
+      const api =
+        createVanilla<Store>(yjs(
+          doc,
+          "hello",
+          (set) =>
+            ({
+              "count": 0,
+              "columns": [],
+              "increment": () =>
+                set((state) =>
+                  ({
+                    ...state,
+                    "count": state.count + 1,
+                  })),
+              "setColumns": (object: Record<string, any>) =>
+                set({
+                  "columns": [ { "dataObject": [ object ], } ],
+                }),
+              "removeColumns": () =>
+                set({
+                  "columns": [ { "dataObject": undefined, } ],
+                }),
+            })
+        ));
+
+      expect(() =>
+      {
+        api.getState().setColumns({ "foo": "bar", });
+        api.getState().removeColumns();
+        api.getState().increment();
+      }).not.toThrow();
+    });
+  });
 });
 
 describe("Yjs middleware with network provider", () =>
@@ -604,9 +655,15 @@ describe("Yjs middleware with network provider", () =>
       }
     );
 
-    // Give the server plenty of time to come online.
+    // Wait for the server to be ready before running the tests.
     await new Promise<void>((resolve) =>
-      setTimeout(resolve, 1000));
+    {
+      server.stdout?.on("readable", () =>
+      {
+        server.stdout?.removeAllListeners();
+        resolve();
+      });
+    });
   });
 
   // Kill y-websocket demo server after test has completed.
@@ -739,5 +796,79 @@ describe("Yjs middleware in React", () =>
     });
 
     expect(typeof result.current.someOtherData.foo).toBe("function");
+  });
+
+  /**
+   * See Issue 41.
+   */
+  it("Zustand is properly notified of updates from remote peer.", () =>
+  {
+    type Store =
+    {
+      count: number,
+      increment: () => void,
+    };
+
+    const doc1 = new Y.Doc();
+    const doc2 = new Y.Doc();
+
+    doc1.on("update", (update: any) =>
+    {
+      Y.applyUpdate(doc2, update);
+    });
+
+    doc2.on("update", (update: any) =>
+    {
+      Y.applyUpdate(doc1, update);
+    });
+
+    const useStore1 =
+      create<Store>(yjs(
+        doc1,
+        "hello",
+        (set) =>
+          ({
+            "count": 0,
+            "increment": () =>
+              set((state) =>
+                ({ "count": state.count + 1, })),
+          })
+      ));
+
+
+    const useStore2 =
+      create<Store>(yjs(
+        doc2,
+        "hello",
+        (set) =>
+          ({
+            "count": 0,
+            "increment": () =>
+              set((state) =>
+                ({ "count": state.count + 1, })),
+          })
+      ));
+
+    const { "result": result1, } = renderHook(() =>
+      useStore1(({ count, increment, }) =>
+        ({
+          "count": count,
+          "increment": increment,
+        })));
+
+    const { "result": result2, } = renderHook(() =>
+      useStore2(({ count, increment, }) =>
+        ({
+          "count": count,
+          "increment": increment,
+        })));
+
+    act(() =>
+    {
+      result1.current.increment();
+    });
+
+    expect(doc2.getMap("hello").get("count")).toBe(1); // Sanity check
+    expect(result2.current.count).toBe(1); // Actual issue
   });
 });

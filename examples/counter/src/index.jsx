@@ -5,13 +5,15 @@ import { render, } from "react-dom";
 import * as Y from "yjs";
 import { WebrtcProvider, } from "y-webrtc";
 
-import create from "zustand";
+import { create, } from "zustand";
 import yjs from "zustand-middleware-yjs";
 
 window.localStorage.setItem("log", "y-webrtc");
 
 const doc = new Y.Doc();
-new WebrtcProvider("counter-room", doc);
+new WebrtcProvider("counter-room", doc, {
+  "signaling": [ "ws://localhost:4444" ],
+});
 
 const useStore = create(yjs(doc, "shared", (set) =>
   ({

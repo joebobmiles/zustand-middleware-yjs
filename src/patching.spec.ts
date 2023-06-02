@@ -1,129 +1,10 @@
 import * as Y from "yjs";
-import create from "zustand/vanilla";
+import { createStore as create, } from "zustand/vanilla";
 import { arrayToYArray, objectToYMap, } from "./mapping";
 import {
-  getChangeList,
   patchSharedType,
   patchStore,
 } from "./patching";
-
-describe("getChangeList", () =>
-{
-  it.each([
-    [ {} ],
-    [ { "foo": 1, } ],
-    [ [ 1 ] ],
-    // See GitHub Issue #32
-    [ { "foo": null, } ],
-    [ { "foo": undefined, } ],
-    [ [ null ] ],
-    [ [ undefined ] ]
-  ])(
-    "Should create an empty array for two values that are identical.",
-    (value) =>
-    {
-      expect(getChangeList(value, value)).toEqual([]);
-    }
-  );
-
-  it.each([
-    [
-      {},
-      { "foo": 1, },
-      [ "add", "foo", 1 ]
-    ],
-    [
-      [],
-      [ 1 ],
-      [ "add", 0, 1 ]
-    ]
-  ])(
-    "Should create an add entry when b contains a new item. (#%#)",
-    (a, b, change) =>
-    {
-      expect(getChangeList(a, b)).toContainEqual(change);
-    }
-  );
-
-  it("Should create an update entry when b contains a new value.", () =>
-  {
-    expect(getChangeList( { "foo": 1, }, { "foo": 2, }))
-      .toEqual([ [ "update", "foo", 2 ] ]);
-  });
-
-  it("Should create an add and delete entry when an array changes.", () =>
-  {
-    expect(getChangeList([ 1 ], [ 2 ]))
-      .toContainEqual([ "delete", 0, undefined ]);
-
-    expect(getChangeList([ 1 ], [ 2 ]))
-      .toContainEqual([ "add", 0, 2 ]);
-  });
-
-  it(
-    "Should create a delete entry when b is missing a value.",
-    () =>
-    {
-      expect(getChangeList({ "foo": 1, }, {}))
-        .toContainEqual([ "delete", "foo", undefined ]);
-    }
-  );
-
-  it.each([
-    [
-      { "foo": { "bar": 1, }, },
-      { "foo": { "bar": 2, }, },
-      [ "pending", "foo", undefined ]
-    ],
-    [
-      { "foo": [ 1 ], },
-      { "foo": [ 1, 2 ], },
-      [ "pending", "foo", undefined ]
-    ],
-    [
-      [ { "foo": 1, "bar": 3, } ],
-      [ { "foo": 2, "bar": 3, } ],
-      [ "pending", 0, undefined ]
-    ]
-  ])(
-    "Should create a pending entry when a and b have nested data. (#%#)",
-    (a, b, change) =>
-    {
-      expect(getChangeList(a, b))
-        .toContainEqual(change);
-    }
-  );
-
-  it.each([
-    [
-      { "foo": 1, "bar": 2, },
-      { "foo": 1, "bar": 3, },
-      [ "none", "foo", 1 ]
-    ],
-    [
-      [ 1, 3 ],
-      [ 1, 2 ],
-      [ "none", 0, 1 ]
-    ],
-    // See GitHub Issue #32
-    [
-      { "foo": null, "bar": 2, },
-      { "foo": null, "bar": 3, },
-      [ "none", "foo", null ]
-    ],
-    [
-      { "foo": undefined, "bar": 2, },
-      { "foo": undefined, "bar": 3, },
-      [ "none", "foo", undefined ]
-    ]
-  ])(
-    "Should create a 'none' change when a field does not change. (#%#)",
-    (a, b, change) =>
-    {
-      expect(getChangeList(a, b)).toContainEqual(change);
-    }
-  );
-});
 
 describe("patchSharedType", () =>
 {
@@ -389,6 +270,58 @@ describe("patchSharedType", () =>
     );
 
     expect(ymap.get("state").get("foo")).toBe(1);
+  });
+
+  it("Applies additions to text", () =>
+  {
+    ymap.set("text", new Y.Text("a"));
+    patchSharedType(ymap.get("text"), "ab");
+
+    expect(ymap.get("text").toString()).toBe("ab");
+  });
+
+  it("Applies deletions to text", () =>
+  {
+    ymap.set("text", new Y.Text("ab"));
+    patchSharedType(ymap.get("text"), "a");
+
+    expect(ymap.get("text").toString()).toBe("a");
+  });
+
+  it("Combines additions and deletions to text", () =>
+  {
+    ymap.set("text", new Y.Text("ab"));
+    patchSharedType(ymap.get("text"), "bc");
+
+    expect(ymap.get("text").toString()).toBe("bc");
+  });
+
+  it("Converts strings to YText in objects", () =>
+  {
+    ymap.set("state", objectToYMap({ "foo": null, }));
+    patchSharedType(
+      ymap.get("state"),
+      {
+        "foo": "bar",
+      }
+    );
+
+    expect(ymap.get("state").get("foo")).toBeInstanceOf(Y.Text);
+    expect(ymap.get("state").get("foo")
+      .toString()).toBe("bar");
+  });
+
+  it("Converts strings to YText in arrays", () =>
+  {
+    ymap.set("state", arrayToYArray([]));
+    patchSharedType(
+      ymap.get("state"),
+      [ "bar" ]
+    );
+
+    expect(ymap.get("state").get(0)).toBeInstanceOf(Y.Text);
+    expect(ymap.get("state").get(0)
+      .toString()).toBe("bar");
   });
 });
 
@@ -726,5 +659,29 @@ describe("patchStore", () =>
     );
 
     expect(store.getState()).toEqual({ "count": 0, });
+  });
+
+  it.each([
+    [ "a", "b" ],
+    [ "a", "" ],
+    [ "ab", "cd" ],
+    [ "ab", "bc" ]
+  ])("Applies changes to strings", (a, b) =>
+  {
+    type State = {
+      "string": string,
+    };
+
+    const store = create<State>(() =>
+      ({
+        "string": a,
+      }));
+
+    patchStore(
+      store,
+      { "string": b, }
+    );
+
+    expect(store.getState()).toEqual({ "string": b, });
   });
 });

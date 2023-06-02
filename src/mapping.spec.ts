@@ -2,8 +2,10 @@ import * as Y from "yjs";
 import {
   arrayToYArray,
   objectToYMap,
+  stringToYText,
   yArrayToArray,
   yMapToObject,
+  yTextToString,
 } from "./mapping";
 
 describe("arrayToYArray", () =>
@@ -115,7 +117,7 @@ describe("arrayToYArray and yArrayToArray are inverses", () =>
 
     ymap.set("array", arrayToYArray(array));
 
-    expect(yArrayToArray(ymap.get("array"))).toEqual(array);
+    expect(yArrayToArray(ymap.get("array") as Y.Array<any>)).toEqual(array);
   });
 });
 
@@ -128,7 +130,7 @@ describe("objectToYMap", () =>
 
     ymap.set("map", objectToYMap({}));
 
-    expect(ymap.get("map").toJSON()).toEqual({});
+    expect((ymap.get("map") as Y.Map<any>).toJSON()).toEqual({});
   });
 
   it("Converts an non-empty object into a YMap with the same entries.", () =>
@@ -138,7 +140,7 @@ describe("objectToYMap", () =>
 
     ymap.set("map", objectToYMap({ "foo": 1, }));
 
-    expect(ymap.get("map").toJSON()).toEqual({ "foo": 1, });
+    expect((ymap.get("map") as Y.Map<any>).toJSON()).toEqual({ "foo": 1, });
   });
 
   it("Converts nested objects into nested YMaps.", () =>
@@ -148,10 +150,9 @@ describe("objectToYMap", () =>
 
     ymap.set("map", objectToYMap({ "foo": { "bar": 2, }, }));
 
-    expect(ymap.get("map").toJSON()).toEqual({ "foo": { "bar": 2, }, });
-    expect(ymap.get("map").get("foo")
-      .get("bar"))
-      .toBe(2);
+    expect((ymap.get("map") as Y.Map<any>).toJSON())
+      .toEqual({ "foo": { "bar": 2, }, });
+    expect((ymap.get("map") as Y.Map<any>).get("foo").get("bar")).toBe(2);
   });
 
   it("Converts nested arrays into nested YArrays.", () =>
@@ -161,11 +162,10 @@ describe("objectToYMap", () =>
 
     ymap.set("map", objectToYMap({ "foo": [ 1, 2 ], }));
 
-    expect(ymap.get("map").toJSON()).toEqual({ "foo": [ 1, 2 ], });
-    expect(ymap.get("map").get("foo")
-      .get(0)).toBe(1);
-    expect(ymap.get("map").get("foo")
-      .get(1)).toBe(2);
+    expect((ymap.get("map") as Y.Map<any>).toJSON())
+      .toEqual({ "foo": [ 1, 2 ], });
+    expect((ymap.get("map") as Y.Map<any>).get("foo").get(0)).toBe(1);
+    expect((ymap.get("map") as Y.Map<any>).get("foo").get(1)).toBe(2);
   });
 });
 
@@ -195,7 +195,7 @@ describe("yMapToObject", () =>
     const ymap = ydoc.getMap("tmp");
 
     ymap.set("foo", new Y.Map());
-    ymap.get("foo").set("bar", 2);
+    (ymap.get("foo") as Y.Map<any>).set("bar", 2);
 
     expect(yMapToObject(ymap)).toEqual({ "foo": { "bar": 2, }, });
   });
@@ -220,6 +220,41 @@ describe("objectToYMap and yMapToObject are inverses", () =>
 
     ymap.set("map", objectToYMap(object));
 
-    expect(yMapToObject(ymap.get("map"))).toEqual(object);
+    expect(yMapToObject(ymap.get("map") as Y.Map<any>)).toEqual(object);
+  });
+});
+
+describe("yTextToString", () =>
+{
+  it.each([
+    "hello",
+    "rawr",
+    "goodbye"
+  ])("Returns a string with the same content as the YText.", (string) =>
+  {
+    const ydoc = new Y.Doc();
+    const ytext = ydoc.getText("tmp");
+
+    ytext.insert(0, string);
+
+    expect(yTextToString(ytext)).toEqual(string);
+  });
+});
+
+describe("stringToYText", () =>
+{
+  it.each([
+    "hello",
+    "goodbye",
+    "wrong",
+    "running out of things to type"
+  ])("Returns a YText with the same content as the string", (string) =>
+  {
+    const ydoc = new Y.Doc();
+    const ymap = ydoc.getMap("tmp");
+
+    ymap.set("text", stringToYText(string));
+
+    expect((ymap.get("text") as Y.Text).toString()).toEqual(string);
   });
 });
