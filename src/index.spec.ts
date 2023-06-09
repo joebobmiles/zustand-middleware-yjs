@@ -619,6 +619,41 @@ describe("Yjs middleware", () =>
       }).not.toThrow();
     });
   });
+
+  // See issue #49
+  describe("When nesting strings into arrays and objects", () =>
+  {
+    it("Does not crash", () =>
+    {
+      type Store =
+      {
+        foo: { bar: string }
+        updateFoo: (s: string) => void
+      };
+
+      const doc = new Y.Doc();
+
+      const api = createVanilla<Store>(yjs(
+        doc,
+        "hello",
+        (set) =>
+          ({
+            "foo": {
+              "bar": "baz",
+            },
+            "updateFoo": (s: string) =>
+              set((state) =>
+                ({ ...state, "foo": { "bar": s, }, })),
+          })
+      ));
+
+      expect(() =>
+      {
+        api.getState().updateFoo("bingo");
+        api.getState().updateFoo("bango"); // Always on subsequent update
+      }).not.toThrow();
+    });
+  });
 });
 
 describe("Yjs middleware with network provider", () =>

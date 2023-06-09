@@ -28,6 +28,9 @@ export const arrayToYArray = (array: any[]): Y.Array<any> =>
     else if (value instanceof Object)
       yarray.push([ objectToYMap(value) ]);
 
+    else if (typeof value === "string")
+      yarray.push([ stringToYText(value) ]);
+
     else
       yarray.push([ value ]);
   });
@@ -101,6 +104,9 @@ export const objectToYMap = (object: any): Y.Map<any> =>
 
     else if (value instanceof Object)
       ymap.set(property, objectToYMap(value));
+
+    else if (typeof value === "string")
+      ymap.set(property, stringToYText(value));
 
     else
       ymap.set(property, value);
