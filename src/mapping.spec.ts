@@ -67,6 +67,16 @@ describe("arrayToYArray", () =>
     expect(ymap.get("array").get(0)
       .get("foo")).toBe(1);
   });
+
+  it("Creates YText nested in YArrays from strings nested in arrays.", () =>
+  {
+    ymap.set("array", arrayToYArray([ "hello" ]));
+
+    expect(ymap.get("array").toJSON()).toEqual([ "hello" ]);
+    expect(ymap.get("array").get(0)).toBeInstanceOf(Y.Text);
+    expect(ymap.get("array").get(0)
+      .toString()).toBe("hello");
+  });
 });
 
 describe("yArrayToArray", () =>
@@ -166,6 +176,17 @@ describe("objectToYMap", () =>
       .toEqual({ "foo": [ 1, 2 ], });
     expect((ymap.get("map") as Y.Map<any>).get("foo").get(0)).toBe(1);
     expect((ymap.get("map") as Y.Map<any>).get("foo").get(1)).toBe(2);
+  });
+
+  it("Converts strings into YText.", () =>
+  {
+    const ydoc = new Y.Doc();
+    const ymap = ydoc.getMap("tmp");
+
+    ymap.set("map", objectToYMap({ "foo": "bar", }));
+
+    expect((ymap.get("map") as Y.Map<any>).get("foo")).toBeInstanceOf(Y.Text);
+    expect((ymap.get("map") as Y.Map<any>).get("foo").toString()).toBe("bar");
   });
 });
 
