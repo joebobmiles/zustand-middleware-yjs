@@ -911,6 +911,7 @@ describe("Yjs middleware in React", () =>
 
 describe("Yjs middleware composed with Immer middleware", () =>
 {
+  // See issue 53
   describe("When modifying objects", () =>
   {
     it("Does not crash with non-extensible error on local update.", () =>
@@ -936,6 +937,59 @@ describe("Yjs middleware composed with Immer middleware", () =>
       expect(() =>
       {
         store.getState().addName("Alice");
+      }).not.toThrow();
+    });
+
+    it("Does not crash with non-extensible error on peer update.", () =>
+    {
+      type Store =
+      {
+        names: string[],
+        addName: (name: string) => void
+      };
+
+      const docA = new Y.Doc();
+      const docB = new Y.Doc();
+
+      docA.on("update", (update: any) =>
+      {
+        Y.applyUpdate(docB, update);
+      });
+      docB.on("update", (update: any) =>
+      {
+        Y.applyUpdate(docA, update);
+      });
+
+      const storeName = "store";
+
+      createVanilla<Store>()(immer(yjs(
+        docA,
+        storeName,
+        (set) =>
+          ({
+            "names": [] as Array<string>,
+            "addName": (name: string) =>
+              set((state) =>
+                state.names.push(name)),
+          })
+      )));
+
+      const storeB = createVanilla<Store>()(immer(yjs(
+        docB,
+        storeName,
+        (set) =>
+          ({
+            "names": [],
+            "addName": (name: string) =>
+              set((state) =>
+                state.names.push(name)),
+          })
+      )));
+
+      expect(() =>
+      {
+        storeB.getState().addName("Alice");
+        // Peer A should not throw an error.
       }).not.toThrow();
     });
   });
