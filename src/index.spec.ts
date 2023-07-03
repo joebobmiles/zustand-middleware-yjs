@@ -5,6 +5,7 @@ import { act, renderHook, } from "@testing-library/react-hooks";
 
 import { createStore as createVanilla, } from "zustand/vanilla";
 import { create, } from "zustand";
+import { immer, } from "zustand/middleware/immer";
 
 import * as Y from "yjs";
 import { WebsocketProvider, } from "y-websocket";
@@ -905,5 +906,37 @@ describe("Yjs middleware in React", () =>
 
     expect(doc2.getMap("hello").get("count")).toBe(1); // Sanity check
     expect(result2.current.count).toBe(1); // Actual issue
+  });
+});
+
+describe("Yjs middleware composed with Immer middleware", () =>
+{
+  describe("When modifying objects", () =>
+  {
+    it("Does not crash with non-extensible error on local update.", () =>
+    {
+      type Store =
+      {
+        names: string[],
+        addName: (name: string) => void
+      };
+
+      const store = createVanilla<Store>()(immer(yjs(
+        new Y.Doc(),
+        "hello",
+        (set) =>
+          ({
+            "names": [],
+            "addName": (name: string) =>
+              set((state) =>
+                state.names.push(name)),
+          })
+      )));
+
+      expect(() =>
+      {
+        store.getState().addName("Alice");
+      }).not.toThrow();
+    });
   });
 });
