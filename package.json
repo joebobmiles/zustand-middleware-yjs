@@ -38,7 +38,8 @@
   ],
   "exports": {
     "require": "./dist/yjs.cjs",
-    "import": "./dist/yjs.mjs"
+    "import": "./dist/yjs.mjs",
+    "types": "./dist/index.d.ts"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
