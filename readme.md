@@ -5,7 +5,8 @@ with modern state management libraries in React. This middleware for Zustand
 solves that problem by allowing a Zustand store to be turned into a CRDT, with
 the store's state replicated to all peers.
 
-This differs from the other Yjs and Zustand solution, `zustand-yjs` by allowing
+This differs from the other Yjs and Zustand solution,
+[`zustand-yjs`](https://github.com/tandem-pt/zustand-yjs), by allowing
 any Zustand store be turned into a CRDT. This contrasts with `zustand-yjs`'s
 solution, which uses a Zustand store to collect shared types and access them
 through special hooks.
@@ -13,7 +14,8 @@ through special hooks.
 Because this solution is simply a middleware, it can also work anywhere Zustand
 can be used. The vanilla Zustand `create()` function handles middleware exactly
 the same as the React version. And not only that, but it can be composed with
-other middleware, such as Immer or Redux!
+other middleware, such as Redux!
+([Immer doesn't work](https://github.com/joebobmiles/zustand-middleware-yjs/issues/53))
 
 ## Example
 
@@ -80,7 +82,7 @@ render(
     if the library is able to support Yjs protocols. This means that, for now,
     support for the awareness protocol is not planned.
       * This does not mean you cannot use awareness in your projects - see the
-        sister project [y-react](joebobmiles/y-react) for an example of using
+        sister project [y-react](https://github.com/joebobmiles/y-react) for an example of using
         awareness without the middleware.
 
 # License
