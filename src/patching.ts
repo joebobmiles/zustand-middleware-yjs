@@ -171,7 +171,7 @@ export const patchState = (oldState: any, newState: any): any =>
             return revisedArray;
           }
         },
-        array
+        [...array]
       );
 
   const applyChangesToObject = (
