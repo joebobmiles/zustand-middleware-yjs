@@ -12,14 +12,16 @@ import { StoreApi, } from "zustand/vanilla";
  *
  * @param sharedType The Yjs shared type to patch.
  * @param newState The new state to patch the shared type into.
+ * @param atomicProps
  */
 export const patchSharedType = (
   sharedType: Y.Map<any> | Y.Array<any> | Y.Text,
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  newState: any
+  newState: any,
+  atomicProps: Set<string>
 ): void =>
 {
-  const changes = getChanges(sharedType.toJSON(), newState);
+  const changes = getChanges(sharedType.toJSON(), newState, atomicProps);
 
   changes.forEach(([ type, property, value ]) =>
   {
@@ -31,12 +33,14 @@ export const patchSharedType = (
       {
         if (sharedType instanceof Y.Map)
         {
-          if (typeof value === "string")
+          if (atomicProps.has(property as string))
+            sharedType.set(property as string, value);
+          else if (typeof value === "string")
             sharedType.set(property as string, stringToYText(value));
           else if (value instanceof Array)
-            sharedType.set(property as string, arrayToYArray(value));
+            sharedType.set(property as string, arrayToYArray(value, atomicProps));
           else if (value instanceof Object)
-            sharedType.set(property as string, objectToYMap(value));
+            sharedType.set(property as string, objectToYMap(value, atomicProps));
           else
             sharedType.set(property as string, value);
         }
@@ -51,9 +55,9 @@ export const patchSharedType = (
           if (typeof value === "string")
             sharedType.insert(index, [ stringToYText(value) ]);
           else if (value instanceof Array)
-            sharedType.insert(index, [ arrayToYArray(value) ]);
+            sharedType.insert(index, [ arrayToYArray(value,atomicProps) ]);
           else if (value instanceof Object)
-            sharedType.insert(index, [ objectToYMap(value) ]);
+            sharedType.insert(index, [ objectToYMap(value, atomicProps) ]);
           else
             sharedType.insert(index, [ value ]);
         }
@@ -86,14 +90,16 @@ export const patchSharedType = (
       {
         patchSharedType(
           sharedType.get(property as string),
-          newState[property as string]
+          newState[property as string],
+          atomicProps
         );
       }
       else if (sharedType instanceof Y.Array)
       {
         patchSharedType(
           sharedType.get(property as number),
-          newState[property as number]
+          newState[property as number],
+          atomicProps
         );
       }
       break;
@@ -112,12 +118,13 @@ export const patchSharedType = (
  * @param oldState The state we want to patch.
  * @param newState The state we want oldState to match after patching.
  *
+ * @param atomicProps
  * @returns The patched oldState, identical to newState.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const patchState = (oldState: any, newState: any): any =>
+export const patchState = (oldState: any, newState: any, atomicProps: Set<string>): any =>
 {
-  const changes = getChanges(oldState, newState);
+  const changes = getChanges(oldState, newState, atomicProps);
 
   const applyChanges = (
     state: (string | any[] | Record<string, any>),
@@ -255,11 +262,13 @@ export const patchState = (oldState: any, newState: any): any =>
  *
  * @param store The Zustand API that manages the store we want to patch.
  * @param newState The new state that the Zustand store should be patched to.
+ * @param atomicProps
  */
 export const patchStore = <S extends unknown>(
   store: StoreApi<S>,
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  newState: any
+  newState: any,
+  atomicProps: Set<string>
 ): void =>
 {
   // Clone the oldState instead of using it directly from store.getState().
@@ -268,7 +277,7 @@ export const patchStore = <S extends unknown>(
   };
 
   store.setState(
-    patchState(oldState, newState),
+    patchState(oldState, newState, atomicProps),
     true // Replace with the patched state.
   );
 };

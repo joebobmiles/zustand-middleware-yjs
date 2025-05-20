@@ -13,7 +13,7 @@ describe.only("getChanges", () =>
       [ { "foo": { "bar": 1, }, } ]
     ])("Returns an empty list for two identical objects.", (a) =>
     {
-      expect(getChanges(a, a)).toStrictEqual([]);
+      expect(getChanges(a, a, new Set())).toStrictEqual([]);
     });
 
     it.each([
@@ -155,7 +155,7 @@ describe.only("getChanges", () =>
       ]
     ])("Generates a change list for objects", (a, b, changes) =>
     {
-      expect(getChanges(a, b)).toStrictEqual(changes);
+      expect(getChanges(a, b, new Set())).toStrictEqual(changes);
     });
 
     it("Ignores properties whose values are functions", () =>
@@ -167,7 +167,7 @@ describe.only("getChanges", () =>
 
       const b = {};
 
-      expect(getChanges(a, b)).toStrictEqual([]);
+      expect(getChanges(a, b, new Set())).toStrictEqual([]);
     });
   });
 
@@ -179,7 +179,7 @@ describe.only("getChanges", () =>
       [ [ { "foo": 1, } ] ]
     ])("Returns an empty list for identical arrays", (a) =>
     {
-      expect(getChanges(a, a)).toStrictEqual([]);
+      expect(getChanges(a, a, new Set())).toStrictEqual([]);
     });
 
     it.each([
@@ -356,7 +356,7 @@ describe.only("getChanges", () =>
       ]
     ])("Returns a change list for arrays", (a, b, changes) =>
     {
-      expect(getChanges(a, b)).toStrictEqual(changes);
+      expect(getChanges(a, b, new Set())).toStrictEqual(changes);
     });
   });
 
@@ -368,7 +368,7 @@ describe.only("getChanges", () =>
       [ "hello, world!", "hello, world!" ]
     ])("Returns undefined for identical sequences", (a, b) =>
     {
-      expect(getChanges(a, b)).toStrictEqual([]);
+      expect(getChanges(a, b, new Set())).toStrictEqual([]);
     });
 
     it.each([
@@ -429,7 +429,7 @@ describe.only("getChanges", () =>
       ]
     ])("Returns a change tuple for sequences that are different", (a, b, diff) =>
     {
-      expect(getChanges(a, b)).toStrictEqual(diff);
+      expect(getChanges(a, b, new Set())).toStrictEqual(diff);
     });
 
     it.each([
@@ -469,7 +469,67 @@ describe.only("getChanges", () =>
       ]
     ])("Adjusts indices to account for previous changes.", (a, b, diff) =>
     {
-      expect(getChanges(a, b)).toStrictEqual(diff);
+      expect(getChanges(a, b, new Set())).toStrictEqual(diff);
     });
+
+    it.each([
+      [
+        {  },
+        { a: 'av', b: 'bv' },
+        new Set(['a']),
+        [
+          [ChangeType.INSERT, "a", "av"],
+          [ChangeType.INSERT, "b", "bv"]
+        ]
+      ],
+      [
+        { a: 'av', b: 'bv' },
+        { a: 'ao', b: 'bo' },
+        new Set(['a']),
+        [
+          [
+            ChangeType.UPDATE, "a", "ao"
+          ],
+          [
+            ChangeType.PENDING, "b",
+            [
+              [ChangeType.DELETE, 1, undefined],
+              [ChangeType.INSERT, 1, "o"]
+            ]
+          ],
+        ],
+      ],
+      [
+        { a: 'av', b: 'bv' },
+        { },
+        new Set(['a']),
+        [
+          [ChangeType.DELETE, "a", undefined],
+          [ChangeType.DELETE, "b", undefined]
+        ]
+      ],
+      [
+        { a: [{ c: 'c0v' }, { c: 'c1v' }] },
+        { a: [{ c: 'c0o' }, { c: 'c1v' }] },
+        new Set(['c']),
+        [
+          [
+            ChangeType.PENDING,
+            "a",
+            [
+              [
+                ChangeType.PENDING,
+                0,
+                [
+                  [ChangeType.UPDATE, "c", "c0o"]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ])("Creates a single change for an atomic property.", (a, b, atomicProps, diff) => {
+      expect(getChanges(a, b, atomicProps)).toStrictEqual(diff);
+    })
   });
 });

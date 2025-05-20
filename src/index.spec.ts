@@ -452,6 +452,74 @@ describe("Yjs middleware", () =>
     ]);
   });
 
+  it("Values of atomic properties are updated.", () =>
+  {
+    type Store =
+      {
+        test: { atomic: string },
+        change: () => void,
+      };
+
+    const doc1 = new Y.Doc();
+    const doc2 = new Y.Doc();
+
+    doc1.on("update", (update: any) =>
+    {
+      Y.applyUpdate(doc2, update);
+    });
+    doc2.on("update", (update: any) =>
+    {
+      Y.applyUpdate(doc1, update);
+    });
+
+    const storeName = "store";
+
+    const { "getState": getStateA, } =
+      createVanilla<Store>(yjs(
+        doc1,
+        storeName,
+        (set) =>
+          ({
+            test: {
+              "atomic": "atomic a",
+            },
+            change: () =>
+              set((state) =>
+                ({
+                  test: { atomic: state.test.atomic + ' ca' },
+                })),
+          }),
+        ["atomic"]
+      ));
+
+    const { "getState": getStateB, } =
+      createVanilla<Store>(yjs(
+        doc2,
+        storeName,
+        (set) =>
+          ({
+            test: {
+              "atomic": "atomic b",
+            },
+            change: () =>
+              set((state) =>
+                ({
+                  test: { atomic: state.test.atomic + ' cb' },
+                })),
+          }),
+        ["atomic"]
+      ));
+
+    expect(getStateA().test.atomic).toBe("atomic a");
+    expect(getStateB().test.atomic).toBe("atomic b");
+
+    getStateA().change();
+    getStateB().change();
+
+    expect(getStateA().test.atomic).toBe("atomic a ca cb");
+    expect(getStateB().test.atomic).toBe("atomic a ca cb");
+  });
+
   describe("When adding consecutive entries into arrays", () =>
   {
     it("Does not throw when inserting multiple scalars into arrays.", () =>

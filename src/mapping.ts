@@ -14,19 +14,20 @@ import * as Y from "yjs";
  * arrayToYArray([ { foo: 1 } ]).get(0).get("foo") // => 1
  *
  * @param array The array to transform into a YArray
+ * @param atomicProps
  * @returns A YArray.
  */
-export const arrayToYArray = (array: any[]): Y.Array<any> =>
+export const arrayToYArray = (array: any[], atomicProps: Set<string>): Y.Array<any> =>
 {
   const yarray = new Y.Array();
 
   array.forEach((value) =>
   {
     if (value instanceof Array)
-      yarray.push([ arrayToYArray(value) ]);
+      yarray.push([ arrayToYArray(value, atomicProps) ]);
 
     else if (value instanceof Object)
-      yarray.push([ objectToYMap(value) ]);
+      yarray.push([ objectToYMap(value, atomicProps) ]);
 
     else if (typeof value === "string")
       yarray.push([ stringToYText(value) ]);
@@ -91,19 +92,23 @@ export const yArrayToArray = (yarray: Y.Array<any>): any[] =>
  * objectToYMap({ foo: [ 1, 2 ] }).get("foo").get(1) // => 2
  *
  * @param object The object to turn into a YMap shared type.
+ * @param atomicProps
  * @returns A YMap.
  */
-export const objectToYMap = (object: any): Y.Map<any> =>
+export const objectToYMap = (object: any, atomicProps: Set<string>): Y.Map<any> =>
 {
   const ymap = new Y.Map();
 
   Object.entries(object).forEach(([ property, value ]) =>
   {
-    if (value instanceof Array)
-      ymap.set(property, arrayToYArray(value));
+    if (atomicProps.has(property))
+      ymap.set(property, value);
+
+    else if (value instanceof Array)
+      ymap.set(property, arrayToYArray(value, atomicProps));
 
     else if (value instanceof Object)
-      ymap.set(property, objectToYMap(value));
+      ymap.set(property, objectToYMap(value, atomicProps));
 
     else if (typeof value === "string")
       ymap.set(property, stringToYText(value));

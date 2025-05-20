@@ -14,14 +14,14 @@ const isString = (d: Diffable): d is string =>
 const isRecord = (d: Diffable): d is Record<string, any> =>
   !isArray(d) && !isString(d);
 
-export const getChanges = (a: Diffable, b: Diffable): Change[] =>
+export const getChanges = (a: Diffable, b: Diffable, atomicProps: Set<string>): Change[] =>
 {
   if (isString(a) && isString(b))
     return getStringChanges(a, b);
   else if (isArray(a) && isArray(b))
-    return getArrayChanges(a, b);
+    return getArrayChanges(a, b, atomicProps);
   else if (isRecord(a) && isRecord(b))
-    return getRecordChanges(a, b);
+    return getRecordChanges(a, b, atomicProps);
   else
     return [];
 };
@@ -61,7 +61,7 @@ const getStringChanges = (a: string, b: string): Change[] =>
   }
 };
 
-const getArrayChanges = (a: Array<any>, b: Array<any>): Change[] =>
+const getArrayChanges = (a: Array<any>, b: Array<any>, atomicProps: Set<string>): Change[] =>
 {
   const changeList: Change[] = [];
 
@@ -79,10 +79,10 @@ const getArrayChanges = (a: Array<any>, b: Array<any>): Change[] =>
 
     else if (isDiffable(value) && isDiffable(b[bIndex]))
     {
-      const currentDiff = getChanges(value, b[bIndex]);
+      const currentDiff = getChanges(value, b[bIndex], atomicProps);
       const nextDiff = typeof b[bIndex + 1] === "undefined"
         ? []
-        : getChanges(value, b[bIndex+1]);
+        : getChanges(value, b[bIndex+1], atomicProps);
 
       if (typeof b[bIndex+1] !== "undefined" && nextDiff.length === 0)
       {
@@ -129,7 +129,8 @@ const getArrayChanges = (a: Array<any>, b: Array<any>): Change[] =>
 
 const getRecordChanges = (
   a: Record<string, any>,
-  b: Record<string, any>
+  b: Record<string, any>,
+  atomicProps: Set<string>
 ): Change[] =>
 {
   const changeList: Change[] = [];
@@ -145,9 +146,9 @@ const getRecordChanges = (
     if (!(property in a))
       changeList.push([ ChangeType.INSERT, property, value ]);
 
-    else if (isDiffable(a[property]) && isDiffable(value))
+    else if (isDiffable(a[property]) && isDiffable(value) && !atomicProps.has(property))
     {
-      const d = getChanges(a[property], value);
+      const d = getChanges(a[property], value, atomicProps);
 
       if (d.length !== 0)
         changeList.push([ ChangeType.PENDING, property, d ]);

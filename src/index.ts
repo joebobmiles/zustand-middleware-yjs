@@ -12,13 +12,15 @@ type Yjs = <
 >(
   doc: Y.Doc,
   name: string,
-  f: StateCreator<T, Mps, Mcs>
+  f: StateCreator<T, Mps, Mcs>,
+  atomicProperties?: string[]
 ) => StateCreator<T, Mps, Mcs>;
 
 type YjsImpl = <T extends unknown>(
   doc: Y.Doc,
   name: string,
-  config: StateCreator<T, [], []>
+  config: StateCreator<T, [], []>,
+  atomicProperties?: string[]
 ) => StateCreator<T, [], []>;
 
 
@@ -41,16 +43,21 @@ type YjsImpl = <T extends unknown>(
  * @param doc The Yjs document to create the store in.
  * @param name The name that the store should be listed under in the doc.
  * @param config The initial state of the store we should be using.
+ * @param atomicProperties An array of property names. Properties of these names will be treated as atomic values.
+ *    No corresponding yjs-type will be used. This applies recursively for all objects.
  * @returns A Zustand state creator.
  */
 const yjs: YjsImpl = <S extends unknown>(
   doc: Y.Doc,
   name: string,
-  config: StateCreator<S>
+  config: StateCreator<S>,
+  atomicProperties: string[] = [],
 ): StateCreator<S> =>
 {
   // The root Y.Map that the store is written and read from.
   const map: Y.Map<any> = doc.getMap(name);
+
+  const atomicProps = new Set(atomicProperties);
 
   // Augment the store.
   return (set, get, api) =>
@@ -68,7 +75,7 @@ const yjs: YjsImpl = <S extends unknown>(
       {
         set(partial, replace);
         doc.transact(() =>
-          patchSharedType(map, get()));
+          patchSharedType(map, get(), atomicProps));
       },
       get,
       {
@@ -78,7 +85,7 @@ const yjs: YjsImpl = <S extends unknown>(
         {
           api.setState(partial, replace);
           doc.transact(() =>
-            patchSharedType(map, api.getState()));
+            patchSharedType(map, api.getState(), atomicProps));
         },
       }
     );
@@ -90,7 +97,7 @@ const yjs: YjsImpl = <S extends unknown>(
      */
     map.observeDeep(() =>
     {
-      patchStore(api, map.toJSON());
+      patchStore(api, map.toJSON(), atomicProps);
     });
 
     // Return the initial state to create or the next middleware.
